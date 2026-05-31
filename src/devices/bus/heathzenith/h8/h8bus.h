@@ -245,7 +245,9 @@ public:
 	h8bus_slot_device(const machine_config &mconfig, T &&tag, device_t *owner, const char *sltag, U &&opts, const char *dflt)
 		: h8bus_slot_device(mconfig, tag, owner, (uint32_t) 0)
 	{
-		set_options(std::forward<U>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
 		set_h8bus_slot(std::forward<T>(sltag), tag);
 	}
 

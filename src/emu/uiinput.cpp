@@ -35,8 +35,6 @@ enum
 
 ui_input_manager::ui_input_manager(running_machine &machine)
 	: m_machine(machine)
-	, m_focused_target(nullptr)
-	, m_last_focused_target(nullptr)
 	, m_presses_enabled(true)
 	, m_events_start(0)
 	, m_events_end(0)
@@ -194,8 +192,6 @@ bool ui_input_manager::pressed_repeat(int code, int speed)
 
 void ui_input_manager::push_window_focus_event(render_target *target)
 {
-	m_focused_target = m_last_focused_target = target;
-
 	ui_event event = { ui_event::type::NONE };
 	event.event_type = ui_event::type::WINDOW_FOCUS;
 	event.target = target;
@@ -209,9 +205,6 @@ void ui_input_manager::push_window_focus_event(render_target *target)
 
 void ui_input_manager::push_window_defocus_event(render_target *target)
 {
-	if (m_focused_target == target)
-		m_focused_target = nullptr;
-
 	ui_event event = { ui_event::type::NONE };
 	event.event_type = ui_event::type::WINDOW_DEFOCUS;
 	event.target = target;

@@ -29,8 +29,11 @@ void tigeroad_state::videoctrl_w(u8 data)
 	}
 
 	// bits 4-5 are coin lockouts
-	machine().bookkeeping().coin_lockout_w(0, !(data & 0x10));
-	machine().bookkeeping().coin_lockout_w(1, !(data & 0x20));
+	if (m_has_coinlock)
+	{
+		machine().bookkeeping().coin_lockout_w(0, !(data & 0x10));
+		machine().bookkeeping().coin_lockout_w(1, !(data & 0x20));
+	}
 
 	// bits 6-7 are coin counters
 	machine().bookkeeping().coin_counter_w(0, data & 0x40);
@@ -53,6 +56,7 @@ void tigeroad_state::scroll_w(offs_t offset, u16 data, u16 mem_mask)
 		break;
 	}
 }
+
 
 
 TILE_GET_INFO_MEMBER(tigeroad_state::get_bg_tile_info)

@@ -58,7 +58,10 @@ public:
 	svi_expander_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts)
 		: svi_expander_device(mconfig, tag, owner, uint32_t(0))
 	{
-		set_options(std::forward<T>(opts), nullptr, false);
+		option_reset();
+		opts(*this);
+		set_default_option(nullptr);
+		set_fixed(false);
 	}
 
 	svi_expander_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -95,7 +98,7 @@ public:
 	void bk32_w(int state);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 private:

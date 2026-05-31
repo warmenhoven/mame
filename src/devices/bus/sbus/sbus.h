@@ -26,7 +26,10 @@ public:
 	sbus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, T &&sbus_tag, int slot, U &&opts, const char *dflt, bool fixed = false)
 		: sbus_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<U>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 		m_sbus.set_tag(std::forward<T>(sbus_tag));
 		m_slot = slot;
 	}

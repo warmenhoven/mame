@@ -21,7 +21,10 @@ public:
 	sgi_kbd_port_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: sgi_kbd_port_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	sgi_kbd_port_device(machine_config const &mconfig, char const *tag, device_t *owner, uint32_t clock = 0);
 	virtual ~sgi_kbd_port_device();

@@ -16,8 +16,8 @@
 
 namespace ui {
 
-menu_input_toggles::menu_input_toggles(mame_ui_manager &mui, render_target &target)
-	: menu(mui, target)
+menu_input_toggles::menu_input_toggles(mame_ui_manager &mui, render_container &container)
+	: menu(mui, container)
 {
 	set_heading(_("menu-inputtoggle", "Toggle Inputs"));
 }

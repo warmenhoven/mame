@@ -129,7 +129,10 @@ public:
 	{
 		m_bus.set_tag(std::forward<T>(bus_tag));
 
-		set_options(std::forward<U>(slot_options), default_option, false);
+		option_reset();
+		slot_options(*this);
+		set_default_option(default_option);
+		set_fixed(fixed);
 	}
 
 	auto bus() const { return m_bus; }

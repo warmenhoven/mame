@@ -48,7 +48,10 @@ public:
 	saturn_control_port_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, char const* dflt)
 		: saturn_control_port_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	saturn_control_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
@@ -59,14 +62,14 @@ public:
 	uint8_t read_status();
 	uint8_t read_id(int idx);
 
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 protected:
 	device_saturn_control_port_interface *m_device;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(SATURN_CONTROL_PORT, saturn_control_port_device)
 
 void saturn_controls(device_slot_interface &device);

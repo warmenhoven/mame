@@ -36,7 +36,7 @@ protected:
 		uint64_t io_window_start, uint64_t io_window_end, uint64_t io_offset, address_space *io_space) override;
 	virtual void config_map(address_map &map) override ATTR_COLD;
 
-	void mmio_map(address_map &map) ATTR_COLD;
+	void mmio_map(address_map &map);
 
 private:
 	required_device<s3trio64_vga_device> m_vga;

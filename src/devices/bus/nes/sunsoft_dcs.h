@@ -50,7 +50,10 @@ public:
 	nes_ntb_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts)
 		: nes_ntb_slot_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), nullptr, false);
+		option_reset();
+		opts(*this);
+		set_default_option(nullptr);
+		set_fixed(false);
 	}
 
 	nes_ntb_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -75,7 +78,7 @@ protected:
 	ntb_cart_interface *m_cart;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NES_NTB_SLOT, nes_ntb_slot_device)
 
 
@@ -102,7 +105,7 @@ protected:
 	virtual const tiny_rom_entry *device_rom_region() const override ATTR_COLD;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NES_NTB_ROM, nes_ntb_rom_device)
 
 
@@ -131,7 +134,7 @@ public:
 	virtual void pcb_reset() override;
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 
@@ -146,7 +149,7 @@ private:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NES_SUNSOFT_DCS, nes_sunsoft_dcs_device)
 
 #endif // MAME_BUS_NES_SUNSOFT_DCS_H

@@ -181,7 +181,10 @@ public:
 	ti992_expport_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, U &&opts, const char *dflt)
 		: ti992_expport_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<U>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	ti992_expport_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);

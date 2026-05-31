@@ -88,7 +88,7 @@ public:
 
 	void sega_ferie(machine_config &config);
 
-	float pen_y_mapper(float linear_value);
+	DECLARE_CROSSHAIR_MAPPER_MEMBER(pen_y_mapper);
 	ioport_value pen_y_rescale_r();
 	ioport_value pen_target_r();
 
@@ -321,11 +321,11 @@ void sega_ferie_state::machine_reset()
 	m_pen_target = PEN_TARGET_LCD;
 }
 
-float sega_ferie_state::pen_y_mapper(float linear_value)
+CROSSHAIR_MAPPER_MEMBER(sega_ferie_state::pen_y_mapper)
 {
 	// Parameter `linear_value` is ignored, since we will read the input port directly
 	// for adjustments, just need to return that value in the expected range [0.0f..1.0f].
-	return float(pen_y_rescale_r()) / 0xff;
+	return (float) pen_y_rescale_r() / 0xff;
 }
 
 ioport_value sega_ferie_state::pen_y_rescale_r()

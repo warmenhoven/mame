@@ -35,7 +35,10 @@ public:
 	mac_keyboard_port_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: mac_keyboard_port_device(mconfig, tag, owner, 0U)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	mac_keyboard_port_device(machine_config const &mconfig, char const *tag, device_t *owner, u32 clock = 0U);
 	virtual ~mac_keyboard_port_device() override;

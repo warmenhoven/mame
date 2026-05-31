@@ -33,6 +33,7 @@ newoption {
 		{ "openbsd-clang", "OpenBSD (clang compiler)"},
 		{ "osx",           "OSX (GCC compiler)"     },
 		{ "osx-clang",     "OSX (Clang compiler)"   },
+		{ "solaris",       "Solaris"                },
 	},
 }
 
@@ -41,7 +42,8 @@ newoption {
 	value = "toolset",
 	description = "Choose VS toolset",
 	allowed = {
-		{ "clangcl",       "Visual Studio using Clang/LLVM" },
+		{ "intel-15",      "Intel C++ Compiler XE 15.0" },
+		{ "clangcl",       "Visual Studio 2019 using Clang/LLVM" },
 	},
 }
 
@@ -143,6 +145,10 @@ function toolchain(_buildDir, _subDir)
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-linux")
 		end
 
+		if "solaris" == _OPTIONS["gcc"] then
+			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-solaris")
+		end
+
 
 		if "linux-clang" == _OPTIONS["gcc"] then
 			premake.gcc.cc  = "clang"
@@ -206,11 +212,10 @@ function toolchain(_buildDir, _subDir)
 			premake.vstudio.toolset = ("ClangCL")
 			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-clang")
 		end
-	elseif _ACTION == "vs2026" then
 
-		if "clangcl" == _OPTIONS["vs"] then
-			premake.vstudio.toolset = ("ClangCL")
-			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-clang")
+		if "intel-15" == _OPTIONS["vs"] then
+			premake.vstudio.toolset = "Intel C++ Compiler XE 15.0"
+			location (_buildDir .. "projects/" .. _subDir .. "/".. _ACTION .. "-intel")
 		end
 	end
 
@@ -371,6 +376,35 @@ function toolchain(_buildDir, _subDir)
 	configuration { "linux-clang", "x64", "Debug" }
 		targetdir (_buildDir .. "linux_clang" .. "/bin/x64/Debug")
 
+	configuration { "solaris", "x32" }
+		objdir (_buildDir .. "solaris" .. "/obj")
+		buildoptions {
+			"-m32",
+		}
+
+	configuration { "solaris", "x32", "Release" }
+		targetdir (_buildDir .. "solaris" .. "/bin/x32/Release")
+
+	configuration { "solaris", "x32", "Debug" }
+		targetdir (_buildDir .. "solaris" .. "/bin/x32/Debug")
+
+	configuration { "solaris", "x64" }
+		objdir (_buildDir .. "solaris" .. "/obj")
+		buildoptions {
+			"-m64",
+		}
+
+	configuration { "solaris", "x64", "Release" }
+		targetdir (_buildDir .. "solaris" .. "/bin/x64/Release")
+
+	configuration { "solaris", "x64", "Debug" }
+		targetdir (_buildDir .. "solaris" .. "/bin/x64/Debug")
+
+	configuration { "freebsd", "x32" }
+		objdir (_buildDir .. "freebsd" .. "/obj")
+		buildoptions {
+			"-m32",
+		}
 
 	configuration { "freebsd", "x32", "Release" }
 		targetdir (_buildDir .. "freebsd" .. "/bin/x32/Release")

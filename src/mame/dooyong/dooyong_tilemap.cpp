@@ -28,10 +28,10 @@ dooyong_tilemap_device_base::dooyong_tilemap_device_base(
 		device_t *owner,
 		u32 clock)
 	: device_t(mconfig, type, tag, owner, clock)
-	, device_gfx_interface(mconfig, *this)
+	, m_gfxdecode(*this, finder_base::DUMMY_TAG)
+	, m_gfxnum(0)
 	, m_tilemap(nullptr)
 	, m_palette_bank(0)
-	, m_gfxinfo(nullptr)
 {
 }
 
@@ -88,7 +88,7 @@ void dooyong_rom_tilemap_device::ctrl_w(offs_t offset, u8 data)
 			break;
 		case 3: // Low byte of Y scroll
 		case 4: // High byte of Y scroll
-			m_tilemap->set_scrolly(0, m_registers[3] | (u32(m_registers[4]) << 8));
+			m_tilemap->set_scrolly(0, m_registers[3] | (unsigned(m_registers[4]) << 8));
 			break;
 		case 6: // Tilemap enable and mode control
 			m_tilemap->enable(!BIT(data, 4));
@@ -98,7 +98,7 @@ void dooyong_rom_tilemap_device::ctrl_w(offs_t offset, u8 data)
 		default: // Other addresses are used but function is unknown
 			// 0x05 and 0x07 are initialised on startup
 			// 0x02 is initialised on startup by some games and written to continuously by others
-			//logerror("%s: Unknown tilemap control: 0x%02x = 0x%02x\n", machine().describe_context(), offset, data);
+			// printf("Unknown %s tilemap control: 0x%02x = 0x%02x\n", tag(), unsigned(offset), unsigned(data));
 			break;
 		}
 	}
@@ -106,17 +106,18 @@ void dooyong_rom_tilemap_device::ctrl_w(offs_t offset, u8 data)
 
 void dooyong_rom_tilemap_device::device_start()
 {
-	decode_gfx(m_gfxinfo);
+	if (!m_gfxdecode->started())
+		throw device_missing_dependencies();
 
 	m_tmap_cb.resolve();
 
 	m_tilemap = &machine().tilemap().create(
-			*this,
+			*m_gfxdecode,
 			tilemap_get_info_delegate(*this, FUNC(dooyong_rom_tilemap_device::tile_info)),
 			TILEMAP_SCAN_COLS,
-			tgfx().width(),
-			tgfx().height(),
-			1024 / tgfx().width(),
+			gfx().width(),
+			gfx().height(),
+			1024 / gfx().width(),
 			m_rows);
 	if (~m_transparent_pen)
 		m_tilemap->set_transparent_pen(m_transparent_pen);
@@ -177,7 +178,7 @@ TILE_GET_INFO_MEMBER(dooyong_rom_tilemap_device::tile_info)
 	}
 	color |= m_palette_bank;
 
-	tileinfo.set(0, code, color, flags);
+	tileinfo.set(m_gfxnum, code, color, flags);
 }
 
 
@@ -207,7 +208,7 @@ TILE_GET_INFO_MEMBER(rshark_rom_tilemap_device::tile_info)
 
 	const int tile_index_color = adjust_tile_index(tile_index) & (m_colorrom_length - 1);
 	const u16 color = m_palette_bank | (m_colorrom[m_colorrom_offset + tile_index_color] & 0x0fU);
-	tileinfo.palette_base = tgfx().colorbase() + (tgfx().granularity() * (color % tgfx().colors()));
+	tileinfo.palette_base = gfx().colorbase() + (gfx().granularity() * (color % gfx().colors()));
 }
 
 
@@ -231,10 +232,11 @@ void dooyong_ram_tilemap_device::tileram_w(offs_t offset, u16 data, u16 mem_mask
 
 void dooyong_ram_tilemap_device::device_start()
 {
-	decode_gfx(m_gfxinfo);
+	if (!m_gfxdecode->started())
+		throw device_missing_dependencies();
 
 	m_tilemap = &machine().tilemap().create(
-			*this,
+			*m_gfxdecode,
 			tilemap_get_info_delegate(*this, FUNC(dooyong_ram_tilemap_device::tile_info)),
 			TILEMAP_SCAN_COLS,
 			8,
@@ -259,5 +261,5 @@ TILE_GET_INFO_MEMBER(dooyong_ram_tilemap_device::tile_info)
 	// c = gfx code
 	// C = color code
 	const u16 attr(m_tileram[tile_index]);
-	tileinfo.set(0, attr & 0x0fffU, m_palette_bank | BIT(attr, 12, 4), 0);
+	tileinfo.set(m_gfxnum, attr & 0x0fffU, m_palette_bank | BIT(attr, 12, 4), 0);
 }

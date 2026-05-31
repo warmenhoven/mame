@@ -53,7 +53,10 @@ public:
 	exp_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&slot_options, const char *default_option)
 		: exp_slot_device(mconfig, tag, owner)
 	{
-		set_options(std::forward<T>(slot_options), default_option, false);
+		option_reset();
+		slot_options(*this);
+		set_default_option(default_option);
+		set_fixed(false);
 	}
 
 	exp_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, uint32_t clock = 0);

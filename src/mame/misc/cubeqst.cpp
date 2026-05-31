@@ -7,32 +7,24 @@
     driver by Phil Bennett
 
     TODO:
-    * Make laserdisc unit an optional slot device?
-    * Accurate video timings
-      - Derive from PROMs
-    * More accurate line fill circuitry emulation
-      - Use PROMs
+       * Accurate video timings
+        - Derive from PROMs
+       * More accurate line fill circuitry emulation
+        - Use PROMs
 
     Known bugs:
-    * The graphics tend go screwy when you add the first credit on the
-      'Cubic History' screen.
-    * The guardians' pincer thingies shouldn't distort when they rotate
-
-    If a laserdisc is not inserted (or the player is turned off/not hooked up),
-    the game will substitute the background graphics with simpler ones. It
-    will take a while to boot, this is normal.
+        * The graphics tend go screwy when you add the first credit on the
+          'Cubic History' screen.
+        * The guardians' pincer thingies shouldn't distort when they rotate
 
 ****************************************************************************/
 
 #include "emu.h"
-
 #include "cpu/cubeqcpu/cubeqcpu.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/ldpr8210.h"
 #include "machine/nvram.h"
 #include "sound/dac.h"
-
-#include "romload.h"
 #include "speaker.h"
 
 
@@ -43,18 +35,15 @@ class cubeqst_state : public driver_device
 public:
 	cubeqst_state(const machine_config &mconfig, device_type type, const char *tag) :
 		driver_device(mconfig, type, tag),
+		m_laserdisc(*this, "laserdisc"),
 		m_maincpu(*this, "main_cpu"),
 		m_rotatecpu(*this, "rotate_cpu"),
 		m_linecpu(*this, "line_cpu"),
 		m_soundcpu(*this, "sound_cpu"),
-		m_laserdisc(*this, "laserdisc"),
 		m_screen(*this, "screen"),
 		m_ldacs(*this, "ldac%u", 0U),
 		m_rdacs(*this, "rdac%u", 0U),
-		m_paletteram(*this, "paletteram"),
-		m_buttons(*this, "BUTTONS"),
-		m_track(*this, "TRACK_%c", 'X'),
-		m_conf(*this, "CONF")
+		m_generic_paletteram_16(*this, "paletteram")
 	{
 	}
 
@@ -66,25 +55,20 @@ protected:
 	virtual void video_start() override ATTR_COLD;
 
 private:
+	required_device<simutrek_special_device> m_laserdisc;
 	required_device<cpu_device> m_maincpu;
 	required_device<cquestrot_cpu_device> m_rotatecpu;
 	required_device<cquestlin_cpu_device> m_linecpu;
 	required_device<cquestsnd_cpu_device> m_soundcpu;
-	required_device<simutrek_special_device> m_laserdisc;
 	required_device<screen_device> m_screen;
 	required_device_array<dac_word_interface, 8> m_ldacs;
 	required_device_array<dac_word_interface, 8> m_rdacs;
-	required_shared_ptr<uint16_t> m_paletteram;
-
-	required_ioport m_buttons;
-	optional_ioport_array<2> m_track;
-	required_ioport m_conf;
+	required_shared_ptr<uint16_t> m_generic_paletteram_16;
 
 	std::unique_ptr<uint8_t[]> m_depth_buffer;
-	uint8_t m_video_field = 0;
+	int m_video_field = 0;
 	uint8_t m_io_latch = 0;
 	uint8_t m_reset_latch = 0;
-	uint8_t m_ld_enabled = 0;
 	std::unique_ptr<rgb_t[]> m_colormap;
 
 	void palette_w(offs_t offset, uint16_t data, uint16_t mem_mask = ~0);
@@ -115,20 +99,32 @@ private:
 
 /*************************************
  *
- *  Video Hardware
+ *  Constants
+ *
+ *************************************/
+
+/* TODO */
+#define CUBEQST_HBLANK      320
+#define CUBEQST_VCOUNT      280
+
+
+/*************************************
+ *
+ *  Video (move to separate file)
  *
  *************************************/
 
 void cubeqst_state::video_start()
 {
 	m_depth_buffer = std::make_unique<uint8_t[]>(512);
-	save_pointer(NAME(m_depth_buffer), 512);
 }
 
 void cubeqst_state::palette_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 {
+//  m_screen->update_now();
 	m_screen->update_partial(m_screen->vpos());
-	COMBINE_DATA(&m_paletteram[offset]);
+
+	COMBINE_DATA(&m_generic_paletteram_16[offset]);
 }
 
 /* TODO: This is a simplified version of what actually happens */
@@ -186,7 +182,7 @@ uint32_t cubeqst_state::screen_update_cubeqst(screen_device &screen, bitmap_rgb3
 				}
 
 				/* Draw the span, testing for depth */
-				uint32_t pen = m_colormap[m_paletteram[color]];
+				uint32_t pen = m_colormap[m_generic_paletteram_16[color]];
 				for (int x = h1; x <= h2; ++x)
 				{
 					if (!(m_depth_buffer[x] < depth))
@@ -230,8 +226,7 @@ void cubeqst_state::vblank_irq(int state)
 
 void cubeqst_state::laserdisc_w(uint16_t data)
 {
-	if (m_ld_enabled)
-		m_laserdisc->data_w(data & 0xff);
+	m_laserdisc->data_w(data & 0xff);
 }
 
 /*
@@ -240,17 +235,17 @@ void cubeqst_state::laserdisc_w(uint16_t data)
 */
 uint16_t cubeqst_state::laserdisc_r()
 {
-	if (!m_ld_enabled)
-		return 1;
+	int ldp_command_flag = (m_laserdisc->ready_r() == ASSERT_LINE) ? 0 : 1;
+	int ldp_seek_status = (m_laserdisc->status_r() == ASSERT_LINE) ? 1 : 0;
 
-	return (m_laserdisc->status_r() << 1) | m_laserdisc->ready_r();
+	return (ldp_seek_status << 1) | ldp_command_flag;
 }
 
 
 /* LDP audio squelch control */
 void cubeqst_state::ldaud_w(uint16_t data)
 {
-	m_laserdisc->set_external_audio_squelch(data & m_ld_enabled);
+	m_laserdisc->set_external_audio_squelch(data & 1 ? ASSERT_LINE : CLEAR_LINE);
 }
 
 /*
@@ -265,7 +260,7 @@ void cubeqst_state::ldaud_w(uint16_t data)
 */
 void cubeqst_state::control_w(uint16_t data)
 {
-	m_laserdisc->video_enable(data & m_ld_enabled);
+	m_laserdisc->video_enable(data & 1);
 }
 
 
@@ -309,7 +304,7 @@ void cubeqst_state::reset_w(uint16_t data)
 	if (!BIT(m_reset_latch, 0) && BIT(data, 0))
 		swap_linecpu_banks();
 
-	if (!BIT(data, 2) && m_ld_enabled)
+	if (!BIT(data, 2))
 		m_laserdisc->reset();
 
 	m_reset_latch = data & 0xff;
@@ -350,7 +345,7 @@ void cubeqst_state::io_w(uint16_t data)
 
 uint16_t cubeqst_state::io_r()
 {
-	uint16_t port_data = m_buttons->read();
+	uint16_t port_data = ioport("IO")->read();
 
 	/*
 	     Certain bits depend on Q7 of the IO latch:
@@ -371,7 +366,7 @@ uint16_t cubeqst_state::io_r()
 /* Trackball ('CHOP') */
 uint16_t cubeqst_state::chop_r()
 {
-	return m_track[0]->read() << 8 | m_track[1]->read();
+	return (ioport("TRACK_X")->read() << 8) | ioport("TRACK_Y")->read();
 }
 
 
@@ -382,7 +377,7 @@ uint16_t cubeqst_state::chop_r()
  *************************************/
 
 static INPUT_PORTS_START( cubeqst )
-	PORT_START("BUTTONS")
+	PORT_START("IO")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_TILT )
@@ -392,7 +387,7 @@ static INPUT_PORTS_START( cubeqst )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Right Fire")
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Left Fire")
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_NAME("Free Game")
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xf800, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -401,11 +396,6 @@ static INPUT_PORTS_START( cubeqst )
 
 	PORT_START("TRACK_Y")
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
-
-	PORT_START("CONF")
-	PORT_CONFNAME( 0x01, 0x01, "Laserdisc" )
-	PORT_CONFSETTING(    0x00, DEF_STR( No ) )
-	PORT_CONFSETTING(    0x01, "Auto" )
 INPUT_PORTS_END
 
 
@@ -472,10 +462,6 @@ void cubeqst_state::line_sound_map(address_map &map)
 
 void cubeqst_state::machine_start()
 {
-	save_item(NAME(m_video_field));
-	save_item(NAME(m_io_latch));
-	save_item(NAME(m_reset_latch));
-
 	/* TODO: Use resistor values */
 	m_colormap = std::make_unique<rgb_t[]>(65536);
 	for (int i = 0; i < 65536; ++i)
@@ -494,11 +480,12 @@ void cubeqst_state::machine_start()
 
 void cubeqst_state::machine_reset()
 {
-	if (machine().rom_load().get_disk_handle(":laserdisc"))
-		m_ld_enabled = m_conf->read() & 1;
+	m_reset_latch = 0;
 
 	/* Auxillary CPUs are held in reset */
-	reset_w(0);
+	m_soundcpu->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
+	m_rotatecpu->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
+	m_linecpu->set_input_line(INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 
@@ -517,9 +504,9 @@ void cubeqst_state::machine_reset()
 /* Called by the sound CPU emulation */
 void cubeqst_state::sound_dac_w(uint16_t data)
 {
-	// d0 selects between 4051.1d (right, d0=0) and 4051.3d (left, d0=1)
-	// d1-d3 select the channel
-	// d4-d11 are sent to the 7521 dac, d11 is inverted
+	/// d0 selects between 4051.1d (right, d0=0) and 4051.3d (left, d0=1)
+	/// d1-d3 select the channel
+	/// d4-d11 are sent to the 7521 dac, d11 is inverted
 	uint16_t val = (data >> 4) ^ 0x800;
 	if (data & 1)
 		m_ldacs[data >> 1 & 7]->write(val);
@@ -552,12 +539,12 @@ void cubeqst_state::cubeqst(machine_config &config)
 	m_soundcpu->dac_w().set(FUNC(cubeqst_state::sound_dac_w));
 	m_soundcpu->set_sound_region("soundproms");
 
-	config.set_maximum_quantum(attotime::from_hz(64000));
+	config.set_maximum_quantum(attotime::from_hz(48000));
 
 	NVRAM(config, "nvram", nvram_device::DEFAULT_ALL_0);
 
-	SIMUTREK_SPECIAL(config, m_laserdisc);
-	m_laserdisc->set_overlay(320, 280, FUNC(cubeqst_state::screen_update_cubeqst));
+	SIMUTREK_SPECIAL(config, m_laserdisc, 0);
+	m_laserdisc->set_overlay(CUBEQST_HBLANK, CUBEQST_VCOUNT, FUNC(cubeqst_state::screen_update_cubeqst));
 	m_laserdisc->set_overlay_clip(0, 320-1, 0, 256-8);
 	m_laserdisc->set_overlay_position(0.002f, -0.018f);
 	m_laserdisc->set_overlay_scale(1.0f, 1.030f);

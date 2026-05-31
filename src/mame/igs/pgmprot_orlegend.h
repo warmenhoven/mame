@@ -1,17 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:Olivier Galibert, iq_132
-/* for igs/pgmprot_orlegend.cpp type games */
-#ifndef MAME_IGS_PGMPROT_ORLEGEND_H
-#define MAME_IGS_PGMPROT_ORLEGEND_H
-
-#pragma once
+/* for machine/pgmprot_orlegend.c type games */
 
 class pgm_asic3_state : public pgm_state
 {
 public:
 	pgm_asic3_state(const machine_config &mconfig, device_type type, const char *tag)
-		: pgm_state(mconfig, type, tag)
-	{
+		: pgm_state(mconfig, type, tag) {
 	}
 
 	void init_orlegend();
@@ -33,5 +28,3 @@ private:
 INPUT_PORTS_EXTERN( orlegend );
 INPUT_PORTS_EXTERN( orlegendt );
 INPUT_PORTS_EXTERN( orlegendk );
-
-#endif // MAME_IGS_PGMPROT_ORLEGEND_H

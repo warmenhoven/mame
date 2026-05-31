@@ -61,7 +61,10 @@ public:
 	vip_byteio_port_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt)
 		: vip_byteio_port_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	vip_byteio_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
@@ -79,7 +82,7 @@ public:
 	void inst_w(int state) { m_write_inst(state); }
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
 
@@ -111,7 +114,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(VIP_BYTEIO_PORT, vip_byteio_port_device)
 
 

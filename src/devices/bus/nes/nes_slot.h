@@ -390,7 +390,10 @@ public:
 	nes_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, T &&opts, const char *dflt)
 		: nes_cart_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	nes_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~nes_cart_slot_device();
@@ -448,7 +451,7 @@ protected:
 	void call_load_pcb();
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NES_CART_SLOT, nes_cart_slot_device)
 
 #endif // MAME_BUS_NES_NES_SLOT_H

@@ -111,7 +111,10 @@ public:
 	mindset_module(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt, bool fixed = false)
 		: mindset_module(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 	}
 	mindset_module(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 	virtual ~mindset_module() = default;

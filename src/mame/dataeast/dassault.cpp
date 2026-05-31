@@ -213,6 +213,7 @@ TODO:
 #include "emu.h"
 
 #include "deco16ic.h"
+#include "decocomn.h"
 #include "decospr.h"
 
 #include "cpu/h6280/h6280.h"
@@ -278,7 +279,7 @@ private:
 
 	uint16_t m_priority = 0U;
 
-	void priority_w(uint16_t data);
+	void priority_w(offs_t offset, uint16_t data, uint16_t mem_mask = ~0);
 	void main_irq_ack_w(uint16_t data);
 	void sub_irq_ack_w(uint16_t data);
 	uint16_t control_r(offs_t offset);
@@ -367,6 +368,7 @@ void dassault_state::mix_layer(bitmap_rgb32 &bitmap, bitmap_ind16 *sprite_bitmap
 uint32_t dassault_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
 {
 	uint16_t const flip = m_deco_tilegen[0]->pf_control_r(0);
+	uint16_t const priority = m_priority;
 
 	flip_screen_set(BIT(flip, 7));
 	m_sprgen[0]->set_flip_screen(BIT(flip, 7));
@@ -387,7 +389,7 @@ uint32_t dassault_state::screen_update(screen_device &screen, bitmap_rgb32 &bitm
 	m_deco_tilegen[1]->tilemap_2_draw(screen, bitmap, cliprect, TILEMAP_DRAW_OPAQUE, 0);
 
 	// The middle playfields can be swapped priority-wise
-	if ((m_priority & 3) == 0)
+	if ((priority & 3) == 0)
 	{
 		mix_layer(bitmap, sprite_bitmap1, cliprect, 0x0600, 0x0600, 0x400, 0xff); // 1
 		m_deco_tilegen[0]->tilemap_2_draw(screen, bitmap, cliprect, 0, 2); // 2
@@ -398,7 +400,7 @@ uint32_t dassault_state::screen_update(screen_device &screen, bitmap_rgb32 &bitm
 		mix_layer(bitmap, sprite_bitmap1, cliprect, 0x0000, 0x0600, 0x400, 0xff); // 128
 
 	}
-	else if ((m_priority & 3) == 1)
+	else if ((priority & 3) == 1)
 	{
 		mix_layer(bitmap, sprite_bitmap1, cliprect, 0x0600, 0x0600, 0x400, 0xff); // 1
 		m_deco_tilegen[1]->tilemap_1_draw(screen, bitmap, cliprect, 0, 2); // 2
@@ -408,7 +410,7 @@ uint32_t dassault_state::screen_update(screen_device &screen, bitmap_rgb32 &bitm
 		m_deco_tilegen[0]->tilemap_2_draw(screen, bitmap, cliprect, 0, 64); // 64
 		mix_layer(bitmap, sprite_bitmap1, cliprect, 0x0000, 0x0600, 0x400, 0xff); // 128
 	}
-	else if ((m_priority & 3) == 3)
+	else if ((priority & 3) == 3)
 	{
 		mix_layer(bitmap, sprite_bitmap1, cliprect, 0x0600, 0x0600, 0x400, 0xff); // 1
 		m_deco_tilegen[1]->tilemap_1_draw(screen, bitmap, cliprect, 0, 2); // 2
@@ -430,7 +432,7 @@ uint32_t dassault_state::screen_update(screen_device &screen, bitmap_rgb32 &bitm
 
 /**********************************************************************************/
 
-void dassault_state::priority_w(uint16_t data)
+void dassault_state::priority_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 {
 	m_priority = data;
 }

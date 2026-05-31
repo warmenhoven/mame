@@ -5,12 +5,10 @@
 
 #pragma once
 
+#include "machine/mb87078.h"
 #include "taitoio.h"
-#include "tc0180vcu.h"
-
-#include "sound/mb87077.h"
 #include "video/hd63484.h"
-
+#include "tc0180vcu.h"
 #include "emupal.h"
 #include "screen.h"
 

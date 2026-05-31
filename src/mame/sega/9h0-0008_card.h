@@ -26,7 +26,10 @@ public:
 	sega_9h0_0008_card_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt, bool const fixed)
 		: sega_9h0_0008_card_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 	}
 	sega_9h0_0008_card_device(machine_config const &mconfig, char const *tag, device_t *owner, u32 clock = 0);
 	virtual ~sega_9h0_0008_card_device();

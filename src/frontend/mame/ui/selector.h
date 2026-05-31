@@ -30,7 +30,7 @@ class menu_selector : public menu
 public:
 	menu_selector(
 			mame_ui_manager &mui,
-			render_target &target,
+			render_container &container,
 			std::string &&title,
 			std::vector<std::string> &&sel,
 			int initial,

@@ -21,7 +21,10 @@ public:
 	megadrive_cart_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, u32 clock, T &&opts, char const *dflt)
 		: megadrive_cart_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	megadrive_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 	virtual ~megadrive_cart_slot_device();

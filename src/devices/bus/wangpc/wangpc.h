@@ -37,7 +37,10 @@ public:
 	wangpcbus_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&bus, U &&opts, char const *dflt, int sid)
 		: wangpcbus_slot_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<U>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 		set_bus(std::forward<T>(bus));
 		set_bus_slot(sid);
 	}
@@ -58,7 +61,7 @@ private:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(WANGPC_BUS_SLOT, wangpcbus_slot_device)
 
 
@@ -139,7 +142,7 @@ private:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(WANGPC_BUS, wangpcbus_device)
 
 

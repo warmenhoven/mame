@@ -115,7 +115,10 @@ public:
 	nasbus_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&bus, U &&opts, char const *dflt)
 		: nasbus_slot_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<U>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 		set_bus(std::forward<T>(bus));
 	}
 	nasbus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -132,7 +135,7 @@ private:
 	required_device<nasbus_device> m_bus;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NASBUS_SLOT, nasbus_slot_device)
 
 // ======================> nasbus_device
@@ -171,7 +174,7 @@ private:
 	card_vector m_dev;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NASBUS, nasbus_device)
 
 // ======================> device_nasbus_interface

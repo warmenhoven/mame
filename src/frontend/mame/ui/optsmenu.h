@@ -23,7 +23,7 @@ class menu_simple_game_options : public menu
 public:
 	menu_simple_game_options(
 			mame_ui_manager &mui,
-			render_target &target,
+			render_container &container,
 			std::function<void ()> &&handler);
 	virtual ~menu_simple_game_options() override;
 
@@ -56,7 +56,7 @@ class menu_game_options : public menu_simple_game_options
 public:
 	menu_game_options(
 			mame_ui_manager &mui,
-			render_target &target,
+			render_container &container,
 			machine_filter_data &filter_data,
 			std::function<void ()> &&handler);
 	virtual ~menu_game_options() override;

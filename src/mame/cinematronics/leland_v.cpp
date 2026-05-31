@@ -21,8 +21,8 @@
 
 
 /* constants */
-// TODO: double buffered? hardware has 4 64Kx4bit DRAM chips for video RAM.
-static constexpr int VRAM_SIZE = 0x20000;
+static constexpr int VRAM_SIZE = 0x10000;
+static constexpr int QRAM_SIZE = 0x10000;
 
 
 /*************************************
@@ -34,13 +34,13 @@ static constexpr int VRAM_SIZE = 0x20000;
 TIMER_CALLBACK_MEMBER(leland_state::scanline_callback)
 {
 	u8 scanline = param;
-	const u8 last_scanline = scanline - 1;
+	u8 last_scanline = scanline - 1;
 
 	/* update the DACs */
-	if (!BIT(m_dac_control, 0))
+	if (!(m_dac_control & 0x01))
 		m_dac[0]->write(m_video_ram[last_scanline << 8 | 0xa0]);
 
-	if (!BIT(m_dac_control, 1))
+	if (!(m_dac_control & 0x02))
 		m_dac[1]->write(m_video_ram[last_scanline << 8 | 0xa1]);
 
 	scanline++;
@@ -64,9 +64,9 @@ TILEMAP_MAPPER_MEMBER(leland_state::leland_scan)
 
 TILE_GET_INFO_MEMBER(leland_state::leland_get_tile_info)
 {
-	const int char_bank = ((m_gfxbank >> 4) & 0x03) << 10;
-	const int prom_bank = BIT(m_gfxbank, 3) << 13;
-	const int tile = m_bg_prom[prom_bank | tile_index] | ((tile_index >> 7) & 0x300) | char_bank;
+	int char_bank = ((m_gfxbank >> 4) & 0x03) << 10;
+	int prom_bank = ((m_gfxbank >> 3) & 0x01) << 13;
+	int tile = m_bg_prom[prom_bank | tile_index] | ((tile_index >> 7) & 0x300) | char_bank;
 	tileinfo.set(0, tile, m_bg_prom[prom_bank | tile_index] >> 5, 0);
 }
 
@@ -85,20 +85,8 @@ TILEMAP_MAPPER_MEMBER(ataxx_state::ataxx_scan)
 
 TILE_GET_INFO_MEMBER(ataxx_state::ataxx_get_tile_info)
 {
-	const u16 tile = m_qram[tile_index] | ((m_qram[0x4000 | tile_index] & 0x7f) << 8);
+	u16 tile = m_ataxx_qram[tile_index] | ((m_ataxx_qram[0x4000 | tile_index] & 0x7f) << 8);
 	tileinfo.set(0, tile, 0, 0);
-}
-
-u8 ataxx_state::qram_r(offs_t offset)
-{
-	return m_qram[((m_master_bank & 0xc0) << 8) | offset];
-}
-
-void ataxx_state::qram_w(offs_t offset, u8 data)
-{
-	m_screen->update_partial(m_screen->vpos() - 1);
-	m_qram[((m_master_bank & 0xc0) << 8) | offset] = data;
-	m_tilemap->mark_tile_dirty(((m_master_bank & 0x80) << 8) | offset);
 }
 
 
@@ -108,32 +96,28 @@ void ataxx_state::qram_w(offs_t offset, u8 data)
  *
  *************************************/
 
-void leland_state::init_vram()
-{
-	m_video_ram = make_unique_clear<u8[]>(VRAM_SIZE);
-
-	save_pointer(NAME(m_video_ram), VRAM_SIZE);
-	save_item(NAME(m_xscroll));
-	save_item(NAME(m_yscroll));
-	save_item(STRUCT_MEMBER(m_vram_state, m_buffer));
-	save_item(STRUCT_MEMBER(m_vram_state, m_addr));
-	save_item(STRUCT_MEMBER(m_vram_state, m_latch));
-}
-
 void leland_state::video_start()
 {
 	/* tilemap */
 	m_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(leland_state::leland_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(leland_state::leland_scan)), 8, 8, 256, 256);
 
 	/* allocate memory */
-	init_vram();
+	m_video_ram = make_unique_clear<u8[]>(VRAM_SIZE);
 
 	/* scanline timer */
 	m_scanline_timer = timer_alloc(FUNC(leland_state::scanline_callback), this);
 	m_scanline_timer->adjust(m_screen->time_until_pos(0));
 
 	save_item(NAME(m_gfx_control));
+	save_pointer(NAME(m_video_ram), VRAM_SIZE);
+	save_item(NAME(m_xscroll));
+	save_item(NAME(m_yscroll));
 	save_item(NAME(m_gfxbank));
+	for (u8 i = 0; i < 2; i++)
+	{
+		save_item(NAME(m_vram_state[i].m_addr), i);
+		save_item(NAME(m_vram_state[i].m_latch), i);
+	}
 }
 
 void ataxx_state::video_start()
@@ -143,7 +127,20 @@ void ataxx_state::video_start()
 	m_tilemap = &machine().tilemap().create(*m_gfxdecode, tilemap_get_info_delegate(*this, FUNC(ataxx_state::ataxx_get_tile_info)), tilemap_mapper_delegate(*this, FUNC(ataxx_state::ataxx_scan)), 8, 8, 256, 128);
 
 	/* first do the standard stuff */
-	init_vram();
+	m_video_ram = make_unique_clear<u8[]>(VRAM_SIZE);
+
+	/* allocate memory */
+	m_ataxx_qram = make_unique_clear<u8[]>(QRAM_SIZE);
+
+	save_pointer(NAME(m_video_ram), VRAM_SIZE);
+	save_pointer(NAME(m_ataxx_qram), QRAM_SIZE);
+	save_item(NAME(m_xscroll));
+	save_item(NAME(m_yscroll));
+	for (u8 i = 0; i < 2; i++)
+	{
+		save_item(NAME(m_vram_state[i].m_addr), i);
+		save_item(NAME(m_vram_state[i].m_latch), i);
+	}
 }
 
 
@@ -202,15 +199,12 @@ void leland_state::gfx_port_w(u8 data)
 
 void leland_state::video_addr_w(offs_t offset, u8 data, int num)
 {
-	vram_state_data &state = m_vram_state[num];
+	struct vram_state_data &state = m_vram_state[num];
 
 	if (!offset)
 		state.m_addr = (state.m_addr & 0xfe00) | ((data << 1) & 0x01fe);
 	else
-	{
 		state.m_addr = ((data << 9) & 0xfe00) | (state.m_addr & 0x01fe);
-		state.m_buffer = BIT(data, 7);
-	}
 }
 
 
@@ -222,10 +216,10 @@ void leland_state::video_addr_w(offs_t offset, u8 data, int num)
 
 int leland_state::vram_port_r(offs_t offset, int num)
 {
-	vram_state_data &state = m_vram_state[num];
-	u16 addr = state.m_addr;
-	const int inc = (offset >> 2) & 2;
-	u8 ret;
+	struct vram_state_data *state = m_vram_state + num;
+	int addr = state->m_addr;
+	int inc = (offset >> 2) & 2;
+	int ret;
 
 	switch (offset & 7)
 	{
@@ -247,18 +241,18 @@ int leland_state::vram_port_r(offs_t offset, int num)
 
 		default:
 			if (!machine().side_effects_disabled())
-				LOGMASKED(LOG_WARN, "%s: Warning: Unknown video port %02x read (address=%05x)\n",
-							machine().describe_context(), offset, (state.m_buffer << 16) | addr);
+				LOGMASKED(LOG_WARN, "%s: Warning: Unknown video port %02x read (address=%04x)\n",
+							machine().describe_context(), offset, addr);
 			ret = 0;
 			break;
 	}
 
 	if (!machine().side_effects_disabled())
 	{
-		state.m_addr = addr;
+		state->m_addr = addr;
 
 		if (addr >= 0xf000)
-			LOGMASKED(LOG_COMM, "%s:%s comm read %05X = %02X\n", machine().describe_context(), num ? "slave" : "master", (state.m_buffer << 16) | addr, ret);
+			LOGMASKED(LOG_COMM, "%s:%s comm read %04X = %02X\n", machine().describe_context(), num ? "slave" : "master", addr, ret);
 	}
 
 	return ret;
@@ -273,72 +267,73 @@ int leland_state::vram_port_r(offs_t offset, int num)
 
 void leland_state::vram_port_w(offs_t offset, u8 data, int num)
 {
-	vram_state_data &state = m_vram_state[num];
-	u16 addr = state.m_addr;
-	const int inc = (offset >> 2) & 2;
-	const bool trans = (offset >> 4) & num;
+	u8 *video_ram = m_video_ram.get();
+	struct vram_state_data *state = m_vram_state + num;
+	int addr = state->m_addr;
+	int inc = (offset >> 2) & 2;
+	int trans = (offset >> 4) & num;
 
 	m_screen->update_partial(m_screen->vpos() - 1);
 
 	if (addr >= 0xf000)
-		LOGMASKED(LOG_COMM, "%s:%s comm write %05X = %02X\n", machine().describe_context(), num ? "slave" : "master", (state.m_buffer << 16) | addr, data);
+		LOGMASKED(LOG_COMM, "%s:%s comm write %04X = %02X\n", machine().describe_context(), num ? "slave" : "master", addr, data);
 
 	/* based on the low 3 bits of the offset, update the destination */
 	switch (offset & 7)
 	{
 		case 1: /* write hi = data, lo = latch */
-			m_video_ram[addr & ~1] = state.m_latch[0];
-			m_video_ram[addr |  1] = data;
+			video_ram[addr & ~1] = state->m_latch[0];
+			video_ram[addr |  1] = data;
 			addr += inc;
 			break;
 
 		case 2: /* write hi = latch, lo = data */
-			m_video_ram[addr & ~1] = data;
-			m_video_ram[addr |  1] = state.m_latch[1];
+			video_ram[addr & ~1] = data;
+			video_ram[addr |  1] = state->m_latch[1];
 			addr += inc;
 			break;
 
 		case 3: /* write hi/lo = data (alternating) */
 			if (trans)
 			{
-				if (!(data & 0xf0)) data |= m_video_ram[addr] & 0xf0;
-				if (!(data & 0x0f)) data |= m_video_ram[addr] & 0x0f;
+				if (!(data & 0xf0)) data |= video_ram[addr] & 0xf0;
+				if (!(data & 0x0f)) data |= video_ram[addr] & 0x0f;
 			}
-			m_video_ram[addr] = data;
+			video_ram[addr] = data;
 			addr += inc & (addr << 1);
 			addr ^= 1;
 			break;
 
 		case 5: /* write hi = data */
-			state.m_latch[1] = data;
+			state->m_latch[1] = data;
 			if (trans)
 			{
-				if (!(data & 0xf0)) data |= m_video_ram[addr | 1] & 0xf0;
-				if (!(data & 0x0f)) data |= m_video_ram[addr | 1] & 0x0f;
+				if (!(data & 0xf0)) data |= video_ram[addr | 1] & 0xf0;
+				if (!(data & 0x0f)) data |= video_ram[addr | 1] & 0x0f;
 			}
-			m_video_ram[addr | 1] = data;
+			video_ram[addr | 1] = data;
 			addr += inc;
 			break;
 
 		case 6: /* write lo = data */
-			state.m_latch[0] = data;
+			state->m_latch[0] = data;
 			if (trans)
 			{
-				if (!(data & 0xf0)) data |= m_video_ram[addr & ~1] & 0xf0;
-				if (!(data & 0x0f)) data |= m_video_ram[addr & ~1] & 0x0f;
+				if (!(data & 0xf0)) data |= video_ram[addr & ~1] & 0xf0;
+				if (!(data & 0x0f)) data |= video_ram[addr & ~1] & 0x0f;
 			}
-			m_video_ram[addr & ~1] = data;
+			video_ram[addr & ~1] = data;
 			addr += inc;
 			break;
 
 		default:
-			LOGMASKED(LOG_WARN, "%s:Warning: Unknown video port %02x write (address=%05x value=%02x)\n",
-						machine().describe_context(), offset, (state.m_buffer << 16) | addr, data);
+			LOGMASKED(LOG_WARN, "%s:Warning: Unknown video port write (address=%04x value=%02x)\n",
+						machine().describe_context(), offset, addr);
 			break;
 	}
 
 	/* update the address and plane */
-	state.m_addr = addr;
+	state->m_addr = addr;
 }
 
 
@@ -356,9 +351,9 @@ void leland_state::master_video_addr_w(offs_t offset, u8 data)
 
 TIMER_CALLBACK_MEMBER(leland_state::leland_delayed_mvram_w)
 {
-	const int num = (param >> 16) & 1;
-	const int offset = (param >> 8) & 0xff;
-	const int data = param & 0xff;
+	int num = (param >> 16) & 1;
+	int offset = (param >> 8) & 0xff;
+	int data = param & 0xff;
 	vram_port_w(offset, data, num);
 }
 
@@ -464,7 +459,7 @@ u32 leland_state::screen_update(screen_device &screen, bitmap_ind16 &bitmap, con
 			pen_t pen = dst[x] & 0x3f;
 
 			/* foreground is d6-d9 */
-			if (BIT(x, 0))
+			if (x & 0x01)
 				pen = pen | ((fg_src[x >> 1] & 0x0f) << 6);
 			else
 				pen = pen | ((fg_src[x >> 1] & 0xf0) << 2);

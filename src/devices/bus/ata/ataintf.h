@@ -31,7 +31,11 @@ public:
 
 	template <typename T> abstract_ata_interface_device &set_slot_options(int index, T &&opts, const char *dflt, bool fixed)
 	{
-		slot(index).set_options(std::forward<T>(opts), dflt, fixed);
+		ata_slot_device &dev = slot(index);
+		dev.option_reset();
+		opts(dev);
+		dev.set_default_option(dflt);
+		dev.set_fixed(fixed);
 		return *this;
 	}
 	template <typename T> abstract_ata_interface_device &master(T &&opts, const char *dflt = nullptr, bool fixed = false)
@@ -65,7 +69,7 @@ protected:
 	void internal_write_cs0(offs_t offset, uint16_t data, uint16_t mem_mask = 0xffff);
 	void internal_write_cs1(offs_t offset, uint16_t data, uint16_t mem_mask = 0xffff);
 
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
 

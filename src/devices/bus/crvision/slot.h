@@ -62,7 +62,10 @@ public:
 	crvision_cart_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: crvision_cart_slot_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	crvision_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~crvision_cart_slot_device();
@@ -92,7 +95,7 @@ protected:
 	device_crvision_cart_interface *m_cart;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(CRVISION_CART_SLOT, crvision_cart_slot_device)
 
 #endif // MAME_BUS_CRVISION_SLOT_H

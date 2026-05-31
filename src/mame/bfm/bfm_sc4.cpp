@@ -36,6 +36,7 @@
 #include "bfm_sc4.h"
 #include "bfm_sc45_helper.h"
 
+#include "awpvid.h" //DMD01
 
 #include "cpu/m68000/m68000.h"
 #include "cpu/m6809/m6809.h"
@@ -745,13 +746,13 @@ void sc4_state::bfm_sc4_68307_porta_w(address_space &space, bool dedicated, uint
 	if(m_reel[0])
 	{
 		m_reel[0]->update( data    &0x0f);
-		m_reel[0]->draw();
+		awp_draw_reel(machine(),"reel1", *m_reel[0]);
 	}
 
 	if (m_reel[1])
 	{
 		m_reel[1]->update((data>>4)&0x0f);
-		m_reel[1]->draw();
+		awp_draw_reel(machine(),"reel2", *m_reel[1]);
 	}
 }
 
@@ -762,7 +763,7 @@ void sc4_state::bfm_sc4_reel3_w(uint8_t data)
 	if(m_reel[2])
 	{
 		m_reel[2]->update( data    &0x0f);
-		m_reel[2]->draw();
+		awp_draw_reel(machine(),"reel3", *m_reel[2]);
 	}
 }
 
@@ -773,7 +774,7 @@ void sc4_state::bfm_sc4_reel4_w(uint8_t data)
 	if(m_reel[3])
 	{
 		m_reel[3]->update( data    &0x0f);
-		m_reel[3]->draw();
+		awp_draw_reel(machine(),"reel4", *m_reel[3]);
 	}
 }
 
@@ -866,13 +867,13 @@ void sc4_state::bfm_sc4_duart_output_w(uint8_t data)
 	if(m_reel[4])
 	{
 		m_reel[4]->update( data    &0x0f);
-		m_reel[4]->draw();
+		awp_draw_reel(machine(),"reel5", *m_reel[4]);
 	}
 
 	if (m_reel[5])
 	{
 		m_reel[5]->update((data>>4)&0x0f);
-		m_reel[5]->draw();
+		awp_draw_reel(machine(),"reel6", *m_reel[5]);
 	}
 }
 

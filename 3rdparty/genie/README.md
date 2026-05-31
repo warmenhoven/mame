@@ -18,13 +18,13 @@ Supported project generators:
  * GNU Makefile
  * [JSON Compilation Database][jcdb]
  * Ninja (experimental)
- * Visual Studio 2010, 2012, 2013, 2015, 2017, 2019, 2022, 2026
+ * Visual Studio 2010, 2012, 2013, 2015, 2017, 2019, 2022
  * XCode
 
 Download (stable)
 -----------------
 
-	version 1196 (commit 5ae13c9940b4d5a62b1ea086ffcdacc2ddc16b50)
+	version 1181 (commit 29e6832fdf3b106c0906d288c8ced6c0761b8985)
 
 Linux:  
 https://github.com/bkaradzic/bx/raw/master/tools/bin/linux/genie
@@ -144,15 +144,14 @@ of Premake 4.4 beta 5, and there is no intention to keep it compatible with it.
  - Removed Qbs support.
  - Added vs2022 support.
  - Added xcode15 action with visionOS support.
- - Added vs2026 support.
 
-zidar - GENie build system scripts
+build - GENie build system scripts
 ----------------------------------
 
-zidar is a set of build system scripts and related tools, built around
+build is a set of build system scripts and related tools, built around
 GENie project generator tool.
 
-https://github.com/RudjiGames/zidar
+https://milostosic.github.io/build/
 
 Debugging GENie scripts
 -----------------------

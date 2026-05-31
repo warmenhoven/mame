@@ -12,7 +12,7 @@
     - UA555TC
     - Speaker
 
-    TODO:
+    TOOD:
     - "Funct" key
     - Speaker frequency
 

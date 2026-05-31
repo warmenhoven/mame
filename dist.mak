@@ -40,9 +40,7 @@ endif
 EXE :=
 ifeq ($(OS),windows)
   EXE := .exe
-  ifeq ($(MSYSTEM),CLANG64)
-    PROJECTTYPE := mingw-clang
-  else ifeq ($(MSYSTEM),CLANGARM64)
+  ifeq ($(MSYSTEM),CLANGARM64)
     PROJECTTYPE := mingw-clang
   else
     PROJECTTYPE := mingw-gcc

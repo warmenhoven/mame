@@ -38,11 +38,7 @@ This is not a bug (real machine behaves the same).
 
 #include "emu.h"
 #include "st0016.h"
-
-#include "mahjong.h"
-
 #include "cpu/mips/mips1.h"
-
 #include "emupal.h"
 #include "speaker.h"
 
@@ -61,12 +57,12 @@ public:
 		, m_maincpu(*this, "maincpu")
 		, m_soundcpu(*this,"soundcpu")
 		, m_chrrom(*this, "chr")
-		, m_keys(*this, "KEY%u", 0)
+		, m_keys(*this, "KEY.%u", 0)
 		, m_chrbank(0)
 	{
 	}
 
-	void srmp5(machine_config &config) ATTR_COLD;
+	void srmp5(machine_config &config);
 
 protected:
 	virtual void machine_start() override ATTR_COLD;
@@ -322,13 +318,23 @@ void srmp5_state::input_select_w(uint32_t data)
 
 uint32_t srmp5_state::srmp5_inputs_r()
 {
-	// rows rotated by one position
-	uint8_t const select = bitswap<4>(m_input_select, 0, 3, 2, 1);
-	uint32_t ret = 0xffffffff;
-	for (unsigned i = 0; m_keys.size() > i; ++i)
+	uint32_t ret = 0;
+
+	switch (m_input_select)
 	{
-		if (BIT(select, i))
-			ret &= m_keys[i]->read();
+	case 0x01:
+		ret = m_keys[0]->read();
+		break;
+	case 0x02:
+		ret = m_keys[1]->read();
+		break;
+	case 0x04:
+		ret = m_keys[2]->read();
+		break;
+	case 0x00:
+	case 0x08:
+		ret = m_keys[3]->read();
+		break;
 	}
 	return ret;
 }
@@ -498,20 +504,38 @@ static INPUT_PORTS_START( srmp5 )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BIT ( 0xffffff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_INCLUDE(mahjong_matrix_1p)
+	PORT_START("KEY.0")
+	PORT_BIT ( 0xfffffff0, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
+	PORT_BIT ( 0x00000001, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT ( 0x00000002, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT ( 0x00000004, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT ( 0x00000008, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
 
-	PORT_MODIFY("KEY0")
+	PORT_START("KEY.1")
 	PORT_BIT ( 0xffffffc0, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
+	PORT_BIT ( 0x00000001, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT ( 0x00000002, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT ( 0x00000004, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT ( 0x00000008, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT ( 0x00000010, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
+	PORT_BIT ( 0x00000020, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_MODIFY("KEY1")
-	PORT_BIT ( 0xffffffc0, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
+	PORT_START("KEY.2")
+	PORT_BIT ( 0xffffffe0, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
+	PORT_BIT ( 0x00000001, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT ( 0x00000002, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT ( 0x00000004, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT ( 0x00000008, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT ( 0x00000010, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
 
-	PORT_MODIFY("KEY2")
+	PORT_START("KEY.3")
+	PORT_BIT ( 0xffffff60, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
+	PORT_BIT ( 0x00000001, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT ( 0x00000002, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT ( 0x00000004, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT ( 0x00000008, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT ( 0x00000010, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
 	PORT_BIT ( 0x00000080, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
-	PORT_BIT ( 0xffffff40, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
-
-	PORT_MODIFY("KEY3")
-	PORT_BIT ( 0xffffffc0, IP_ACTIVE_LOW, IPT_UNUSED ) // explicitely discarded
 
 	PORT_START("TEST")
 	PORT_BIT ( 0x00000080, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)

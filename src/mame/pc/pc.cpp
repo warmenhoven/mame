@@ -1494,7 +1494,9 @@ void pc_state::cadd810(machine_config &config)
 	pccga(config);
 
 	auto &kbd(*subdevice<pc_kbdc_device>("kbd"));
-	kbd.set_options(pc_at_keyboards, STR_KBD_IBM_PC_AT_101, false);
+	kbd.option_reset();
+	pc_at_keyboards(kbd);
+	kbd.set_default_option(STR_KBD_IBM_PC_AT_101);
 }
 
 ROM_START( cadd810 )

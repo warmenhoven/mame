@@ -232,7 +232,10 @@ public:
 		const char *dflt, mfmhd_enc_t enc, int spinup, int cache, const mfmhd_format_type format, bool fixed = false)
 		: mfm_harddisk_connector(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 		configure(enc, spinup, cache, format);
 	}
 

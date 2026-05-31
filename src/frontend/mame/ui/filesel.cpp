@@ -55,24 +55,27 @@ namespace ui {
 
 menu_file_selector::menu_file_selector(
 		mame_ui_manager &mui,
-		render_target &target,
-		device_image_interface &image,
+		render_container &container,
+		device_image_interface *image,
 		std::string_view directory,
 		std::string_view file,
 		bool has_empty,
 		bool has_softlist,
 		bool has_create,
 		handler_function &&handler)
-	: menu(mui, target)
+	: menu(mui, container)
 	, m_handler(std::move(handler))
+	, m_image(image)
 	, m_current_directory(directory)
 	, m_current_file(file)
+	, m_result(result::INVALID)
 	, m_has_empty(has_empty)
 	, m_has_softlist(has_softlist)
 	, m_has_create(has_create)
-	, m_is_midi((image.device().type() == MIDIIN) || (image.device().type() == MIDIOUT))
+	, m_is_midi(image->device().type() == MIDIIN || image->device().type() == MIDIOUT)
 	, m_clicked_directory(std::string::npos, std::string::npos)
 {
+	(void)m_image;
 	set_process_flags(PROCESS_IGNOREPAUSE);
 }
 
@@ -83,6 +86,8 @@ menu_file_selector::menu_file_selector(
 
 menu_file_selector::~menu_file_selector()
 {
+	if (m_handler)
+		m_handler(m_result, std::move(m_current_directory), std::move(m_current_file));
 }
 
 
@@ -319,7 +324,7 @@ void menu_file_selector::append_entry_menu_item(const file_selector_entry *entry
 			break;
 
 		case SELECTOR_ENTRY_TYPE_MIDI:
-			text = _("[MIDI port]");
+			text = _("[midi port]");
 			break;
 
 		case SELECTOR_ENTRY_TYPE_CREATE:
@@ -358,19 +363,26 @@ void menu_file_selector::select_item(const file_selector_entry &entry)
 	switch (entry.type)
 	{
 	case SELECTOR_ENTRY_TYPE_EMPTY:
-		m_handler(result::EMPTY, m_current_directory, m_current_file);
+		// empty slot - unload
+		m_result = result::EMPTY;
+		stack_pop();
 		break;
 
 	case SELECTOR_ENTRY_TYPE_MIDI:
-		m_handler(result::MIDI, m_current_directory, m_current_file);
+		// create
+		m_result = result::MIDI;
+		stack_pop();
 		break;
 
 	case SELECTOR_ENTRY_TYPE_CREATE:
-		m_handler(result::CREATE, m_current_directory, m_current_file);
+		// create
+		m_result = result::CREATE;
+		stack_pop();
 		break;
 
 	case SELECTOR_ENTRY_TYPE_SOFTWARE_LIST:
-		m_handler(result::SOFTLIST, m_current_directory, m_current_file);
+		m_result = result::SOFTLIST;
+		stack_pop();
 		break;
 
 	case SELECTOR_ENTRY_TYPE_DRIVE:
@@ -395,7 +407,8 @@ void menu_file_selector::select_item(const file_selector_entry &entry)
 	case SELECTOR_ENTRY_TYPE_FILE:
 		// file
 		m_current_file.assign(entry.fullpath);
-		m_handler(result::FILE, m_current_directory, m_current_file);
+		m_result = result::FILE;
+		stack_pop();
 		break;
 	}
 }
@@ -557,7 +570,6 @@ void menu_file_selector::populate()
 	// append all of the menu entries
 	for (file_selector_entry const &entry : m_entrylist)
 		append_entry_menu_item(&entry);
-	item_append(menu_item_type::SEPARATOR);
 
 	// set the selection (if we have one)
 	if (selected_entry)
@@ -615,10 +627,11 @@ bool menu_file_selector::handle(event const *ev)
 	}
 	else if (ev->itemref && (ev->iptkey == IPT_UI_SELECT))
 	{
-		// reset search when selecting an item
-		m_filename.clear();
-
+		// handle selections
 		select_item(*reinterpret_cast<file_selector_entry const *>(ev->itemref));
+
+		// reset the char buffer when pressing IPT_UI_SELECT
+		m_filename.clear();
 		return true;
 	}
 
@@ -637,12 +650,13 @@ bool menu_file_selector::handle(event const *ev)
 
 menu_select_rw::menu_select_rw(
 		mame_ui_manager &mui,
-		render_target &target,
+		render_container &container,
 		bool can_in_place,
 		handler_function &&handler)
-	: menu(mui, target)
+	: menu(mui, container)
 	, m_handler(std::move(handler))
 	, m_can_in_place(can_in_place)
+	, m_result(result::INVALID)
 {
 }
 
@@ -653,6 +667,8 @@ menu_select_rw::menu_select_rw(
 
 menu_select_rw::~menu_select_rw()
 {
+	if (m_handler)
+		m_handler(m_result);
 }
 
 
@@ -668,8 +684,7 @@ void menu_select_rw::populate()
 	if (m_can_in_place)
 		item_append(_("Read-write"), 0, itemref_from_result(result::READWRITE));
 	item_append(_("Read this image, write to another image"), 0, itemref_from_result(result::WRITE_OTHER));
-	//item_append(_("Read this image, write to diff"), 0, itemref_from_result(result::WRITE_DIFF));
-	item_append(menu_item_type::SEPARATOR);
+	item_append(_("Read this image, write to diff"), 0, itemref_from_result(result::WRITE_DIFF));
 }
 
 
@@ -680,7 +695,10 @@ void menu_select_rw::populate()
 bool menu_select_rw::handle(event const *ev)
 {
 	if (ev && ev->iptkey == IPT_UI_SELECT)
-		m_handler(result_from_itemref(ev->itemref));
+	{
+		m_result = result_from_itemref(ev->itemref);
+		stack_pop();
+	}
 
 	return false;
 }

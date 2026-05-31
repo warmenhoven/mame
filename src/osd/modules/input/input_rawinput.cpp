@@ -798,7 +798,7 @@ protected:
 					if (devicelist().end() == target_device)
 						return false;
 
-					(*target_device)->queue_event(*input);
+					(*target_device)->queue_events(input, 1);
 					return true;
 				}
 			}

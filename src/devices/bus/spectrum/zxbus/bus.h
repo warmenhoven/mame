@@ -62,7 +62,10 @@ public:
 	zxbus_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, u32 clock, T &&zxbus_tag, U &&slot_options, const char *dflt)
 		: zxbus_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<U>(slot_options), dflt, false);
+		option_reset();
+		slot_options(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 		m_zxbus_bus.set_tag(std::forward<T>(zxbus_tag));
 	}
 

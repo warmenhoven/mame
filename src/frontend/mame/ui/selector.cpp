@@ -26,12 +26,12 @@ namespace ui {
 
 menu_selector::menu_selector(
 		mame_ui_manager &mui,
-		render_target &target,
+		render_container &container,
 		std::string &&title,
 		std::vector<std::string> &&sel,
 		int initial,
 		std::function<void (int)> &&handler)
-	: menu(mui, target)
+	: menu(mui, container)
 	, m_title(std::move(title))
 	, m_search()
 	, m_str_items(std::move(sel))

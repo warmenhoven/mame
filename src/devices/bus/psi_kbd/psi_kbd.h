@@ -48,7 +48,7 @@ public:
 	psi_keyboard_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, const char *dflt)
 		: psi_keyboard_bus_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_default_option(dflt);
+		set_options(psi_keyboard_devices, dflt, false);
 	}
 	psi_keyboard_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~psi_keyboard_bus_device();

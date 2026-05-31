@@ -21,7 +21,7 @@ Hardware notes:
 
 #include "emu.h"
 
-#include "mboard.h"
+#include "mmboard.h"
 
 #include "cpu/m6502/r65c02.h"
 #include "cpu/m6502/w65c02.h"

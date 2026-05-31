@@ -22,13 +22,6 @@
 
 #include "strconv.h"
 
-#include <algorithm>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <variant>
-
 // standard windows headers
 #include <tchar.h>
 
@@ -122,7 +115,7 @@ public:
 			devicelist().for_each_device(
 					[args = reinterpret_cast<KeyPressEventArgs const *>(eventdata)] (auto &device)
 					{
-						device.queue_event(*args);
+						device.queue_events(args, 1);
 					});
 			return false; // we still want text input events to be generated
 
@@ -214,7 +207,7 @@ public:
 				&m_mouse.lH);
 
 		// populate the buttons
-		for (int butnum = 0; butnum < std::size(m_mouse.rgbButtons); butnum++)
+		for (int butnum = 0; butnum < 5; butnum++)
 		{
 			device.add_item(
 					default_button_name(butnum),
@@ -238,7 +231,7 @@ protected:
 	{
 		// set the button state
 		assert(!(args.pressed & args.released));
-		for (unsigned i = 0; std::size(m_mouse.rgbButtons) > i; ++i)
+		for (unsigned i = 0; 5 > i; ++i)
 		{
 			if (BIT(args.pressed, i))
 				m_mouse.rgbButtons[i] = 0x80;
@@ -290,7 +283,7 @@ public:
 			{
 				auto const *const args = reinterpret_cast<MouseUpdateEventArgs const *>(eventdata);
 				devicelist().for_each_device(
-						[args] (auto &device) { device.queue_event(*args); });
+						[args] (auto &device) { device.queue_events(args, 1); });
 				return true;
 			}
 		}
@@ -304,7 +297,7 @@ public:
 //  win32_lightgun_device_base
 //============================================================
 
-class win32_lightgun_device_base : public event_based_device<std::variant<MouseUpdateEventArgs, PointerUpdateEventArgs> >
+class win32_lightgun_device_base : public event_based_device<MouseUpdateEventArgs>
 {
 public:
 	virtual void reset() override
@@ -366,8 +359,7 @@ public:
 			input_module &module) :
 		win32_lightgun_device_base(std::move(name), std::move(id), module),
 		m_vscroll(0),
-		m_hscroll(0),
-		m_active_pointer(0)
+		m_hscroll(0)
 	{
 	}
 
@@ -378,27 +370,24 @@ public:
 		int32_t xpos = 0, ypos = 0;
 
 		// get the cursor position and transform into final results
-		if (m_active_pointer == 0)
+		POINT mousepos;
+		GetCursorPos(&mousepos);
+		if (!osd_common_t::window_list().empty())
 		{
-			POINT mousepos;
-			GetCursorPos(&mousepos);
-			if (!osd_common_t::window_list().empty())
-			{
-				// get the position relative to the window
-				HWND const hwnd = dynamic_cast<win_window_info &>(*osd_common_t::window_list().front()).platform_window();
-				RECT client_rect;
-				GetClientRect(hwnd, &client_rect);
-				ScreenToClient(hwnd, &mousepos);
+			// get the position relative to the window
+			HWND const hwnd = dynamic_cast<win_window_info &>(*osd_common_t::window_list().front()).platform_window();
+			RECT client_rect;
+			GetClientRect(hwnd, &client_rect);
+			ScreenToClient(hwnd, &mousepos);
 
-				// convert to absolute coordinates
-				xpos = normalize_absolute_axis(mousepos.x, client_rect.left, client_rect.right);
-				ypos = normalize_absolute_axis(mousepos.y, client_rect.top, client_rect.bottom);
-			}
-
-			// update the X/Y positions
-			m_mouse.lX = xpos;
-			m_mouse.lY = ypos;
+			// convert to absolute coordinates
+			xpos = normalize_absolute_axis(mousepos.x, client_rect.left, client_rect.right);
+			ypos = normalize_absolute_axis(mousepos.y, client_rect.top, client_rect.bottom);
 		}
+
+		// update the X/Y positions
+		m_mouse.lX = xpos;
+		m_mouse.lY = ypos;
 
 		// update the scroll axes if appropriate
 		if (relative_reset)
@@ -410,7 +399,7 @@ public:
 
 	virtual void configure(input_device &device) override
 	{
-		do_configure(device, std::size(m_mouse.rgbButtons));
+		do_configure(device, 5);
 
 		// add scroll axes
 		device.add_item(
@@ -434,32 +423,11 @@ public:
 	}
 
 protected:
-	virtual void process_event(std::variant<MouseUpdateEventArgs, PointerUpdateEventArgs> const &args) override
+	virtual void process_event(MouseUpdateEventArgs const &args) override
 	{
-		std::visit([this] (auto &&a) { process(a); }, args);
-	}
-
-private:
-	void process(MouseUpdateEventArgs const &args)
-	{
-		// work out if this should become the active pointer
-		if (!m_active_pointer)
-		{
-			m_active_pointer = 0;
-		}
-		else if (*m_active_pointer != 0)
-		{
-			if (!args.pressed)
-				return;
-			else if (!any_pressed())
-				m_active_pointer = 0;
-			else
-				return;
-		}
-
-		// in non-shared axis mode, just update the button state
+		// In non-shared axis mode, just update the button state
 		assert(!(args.pressed & args.released));
-		for (unsigned i = 0; std::size(m_mouse.rgbButtons) > i; ++i)
+		for (unsigned i = 0; 5 > i; ++i)
 		{
 			if (BIT(args.pressed, i))
 				m_mouse.rgbButtons[i] = 0x80;
@@ -472,70 +440,8 @@ private:
 		m_hscroll += args.hdelta;
 	}
 
-	void process(PointerUpdateEventArgs const &args)
-	{
-		if (args.lost)
-		{
-			// release all the buttons if the active pointer was lost
-			if (m_active_pointer == args.id)
-			{
-				m_active_pointer = std::nullopt;
-				m_mouse.lX = 0;
-				m_mouse.lY = 0;
-				std::fill(std::begin(m_mouse.rgbButtons), std::end(m_mouse.rgbButtons), 0);
-			}
-		}
-		else
-		{
-			// work out if this should become the active pointer
-			if (!m_active_pointer)
-			{
-				m_active_pointer = args.id;
-			}
-			else if (*m_active_pointer != args.id)
-			{
-				bool const any_down = args.buttons[0] || args.buttons[1] || args.buttons[2] || args.buttons[3] || args.buttons[4];
-
-				if (!any_down)
-					return;
-				else if (!any_pressed())
-					m_active_pointer = args.id;
-				else
-					return;
-			}
-
-			// get the position relative to the window
-			POINT pos;
-			pos.x = args.xpos;
-			pos.y = args.ypos;
-			ScreenToClient(reinterpret_cast<HWND>(args.window), &pos);
-
-			// convert to absolute coordinates
-			RECT client_rect;
-			GetClientRect(reinterpret_cast<HWND>(args.window), &client_rect);
-			m_mouse.lX = normalize_absolute_axis(pos.x, client_rect.left, client_rect.right);
-			m_mouse.lY = normalize_absolute_axis(pos.y, client_rect.top, client_rect.bottom);
-
-			// set button state
-			m_mouse.rgbButtons[0] = args.buttons[0] ? 0x80 : 0x00;
-			m_mouse.rgbButtons[1] = args.buttons[1] ? 0x80 : 0x00;
-			m_mouse.rgbButtons[2] = args.buttons[2] ? 0x80 : 0x00;
-			m_mouse.rgbButtons[3] = args.buttons[3] ? 0x80 : 0x00;
-			m_mouse.rgbButtons[4] = args.buttons[4] ? 0x80 : 0x00;
-		}
-	}
-
-	bool any_pressed() const
-	{
-		auto const pressed = std::find_if(
-				std::begin(m_mouse.rgbButtons),
-				std::end(m_mouse.rgbButtons),
-				[] (BYTE b) { return b != 0; });
-		return pressed != std::end(m_mouse.rgbButtons);
-	}
-
-	long                    m_vscroll, m_hscroll;
-	std::optional<unsigned> m_active_pointer;
+private:
+	long                m_vscroll, m_hscroll;
 };
 
 
@@ -562,13 +468,7 @@ public:
 	}
 
 protected:
-	virtual void process_event(std::variant<MouseUpdateEventArgs, PointerUpdateEventArgs> const &args) override
-	{
-		std::visit([this] (auto &&a) { process(a); }, args);
-	}
-
-private:
-	void process(MouseUpdateEventArgs const &args)
+	virtual void process_event(MouseUpdateEventArgs const &args) override
 	{
 		// We only handle the first four buttons in shared axis mode
 		assert(!(args.pressed & args.released));
@@ -601,11 +501,7 @@ private:
 		}
 	}
 
-	void process(PointerUpdateEventArgs const &args)
-	{
-		// Only consider primary system pointer in dual lightgun mode
-	}
-
+private:
 	int const m_gun_index;
 };
 
@@ -649,14 +545,7 @@ public:
 			{
 				auto const *const args = reinterpret_cast<MouseUpdateEventArgs const *>(eventdata);
 				devicelist().for_each_device(
-						[args] (auto &device) { device.queue_event(*args); });
-				return true;
-			}
-			else if (eventid == INPUT_EVENT_POINTER_UPDATE)
-			{
-				auto const *const args = reinterpret_cast<PointerUpdateEventArgs const *>(eventdata);
-				devicelist().for_each_device(
-						[args] (auto &device) { device.queue_event(*args); });
+						[args] (auto &device) { device.queue_events(args, 1); });
 				return true;
 			}
 		}

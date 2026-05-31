@@ -53,6 +53,7 @@ public:
 	bool decode_buffer(int &pos, int limit, short *output,
 						int &output_samples, int &sample_rate, int &channels, int atbl = 0);
 
+
 	// Clear audio buffer
 	void clear();
 
@@ -67,34 +68,34 @@ private:
 		double range, s7, scale, offset;
 	};
 
-	static const double s_scalefactors[64];
-	static const int s_sample_rates[8];
-	static const int s_layer2_param_index[2][4][16];
-	static const int s_band_parameter_indexed_values[5][32][17];
-	static const int s_band_parameter_index_bits_count[5][32];
-	static const int s_joint_band_counts[4], s_total_band_counts[5];
-	static const band_info s_band_infos[18];
-	static const double s_synthesis_filter[512];
+	static const double scalefactors[64];
+	static const int sample_rates[8];
+	static const int layer2_param_index[2][4][16];
+	static const int band_parameter_indexed_values[5][32][17];
+	static const int band_parameter_index_bits_count[5][32];
+	static const int joint_band_counts[4], total_band_counts[5];
+	static const band_info band_infos[18];
+	static const double synthesis_filter[512];
 
-	const uint8_t *m_base;
-	int m_accepted, m_position_align;
+	const uint8_t *base;
+	int accepted, position_align;
 
-	int m_sampling_rate, m_last_frame_number;
-	int m_param_index, m_cbr_param_index;
+	int sampling_rate, last_frame_number;
+	int param_index, cbr_param_index;
 
-	int m_channel_count, m_total_bands, m_joint_bands;
+	int channel_count, total_bands, joint_bands;
 
-	int m_band_param[2][32];
-	int m_scfsi[2][32];
-	int m_scf[2][3][32];
-	double m_amp_values[2][3][32];
-	double m_bdata[2][3][32];
-	double m_subbuffer[2][32];
-	double m_audio_buffer[2][32*32];
-	int m_audio_buffer_pos[2];
+	int band_param[2][32];
+	int scfsi[2][32];
+	int scf[2][3][32];
+	double amp_values[2][3][32];
+	double bdata[2][3][32];
+	double subbuffer[2][32];
+	double audio_buffer[2][32*32];
+	int audio_buffer_pos[2];
 	double m_cos_cache[32][32];
 
-	int m_current_pos, m_current_limit;
+	int current_pos, current_limit;
 
 	void read_header_amm(bool layer25);
 	void read_header_mpeg2(bool layer25);
@@ -113,6 +114,7 @@ private:
 	void resynthesis(const double *input, double *output);
 	void scale_and_clamp(const double *input, short *output, int step);
 
+
 	static int do_gb_msb(const unsigned char *data, int &pos, int count);
 	static int do_gb_lsb(const unsigned char *data, int &pos, int count);
 
@@ -120,10 +122,10 @@ private:
 
 	inline int gb(int count)
 	{
-		if(m_current_pos + count > m_current_limit)
+		if(current_pos + count > current_limit)
 			throw limit_hit();
 
-		return do_gb(m_base, m_current_pos, count);
+		return do_gb(base, current_pos, count);
 	}
 };
 

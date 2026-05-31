@@ -31,7 +31,10 @@ public:
 	pasopia_pac2_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: pasopia_pac2_slot_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	pasopia_pac2_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock = 0);
@@ -41,7 +44,7 @@ public:
 	void write(offs_t offset, u8 data);
 
 protected:
-	// device_t implementation
+	// device-specific overrides
 	virtual void device_resolve_objects() override ATTR_COLD;
 	virtual void device_start() override ATTR_COLD;
 
@@ -71,7 +74,7 @@ private:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(PASOPIA_PAC2, pasopia_pac2_slot_device)
 
 void pac2_subslot_devices(device_slot_interface &device);

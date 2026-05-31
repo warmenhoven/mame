@@ -109,7 +109,10 @@ public:
 	a800_cart_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: a800_cart_slot_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	a800_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 	virtual ~a800_cart_slot_device();
@@ -200,7 +203,10 @@ public:
 	a5200_cart_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: a5200_cart_slot_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	a5200_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~a5200_cart_slot_device();
@@ -230,7 +236,7 @@ private:
 	int m_type;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(A800_CART_SLOT,  a800_cart_slot_device)
 DECLARE_DEVICE_TYPE(A5200_CART_SLOT, a5200_cart_slot_device)
 

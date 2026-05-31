@@ -32,12 +32,15 @@ public:
 	astrocade_exp_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: astrocade_exp_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	astrocade_exp_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~astrocade_exp_device();
 
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	bool get_card_mounted() { return m_card_mounted; }
@@ -53,7 +56,7 @@ protected:
 	device_astrocade_exp_interface* m_card;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(ASTROCADE_EXP_SLOT, astrocade_exp_device)
 
 #endif // MAME_BUS_ASTROCDE_EXP_H

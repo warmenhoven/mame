@@ -12,10 +12,10 @@ Namco System II
 ***************************************************************************/
 
 #include "emu.h"
-#include "namcos2.h"
-
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6805/m6805.h"
+#include "namcos2.h"
+#include "machine/nvram.h"
 
 
 u16 finallap_state::finallap_prot_r(offs_t offset)
@@ -68,12 +68,19 @@ u16 finallap_state::finallap_prot_r(offs_t offset)
 /* Perform basic machine initialisation                      */
 /*************************************************************/
 
+
+// S2 copy
+
 void namcos2_base_state::machine_start()
 {
+	m_eeprom = std::make_unique<u8[]>(0x2000);
+	subdevice<nvram_device>("nvram")->set_base(m_eeprom.get(), 0x2000);
+
 	const u32 max = memregion("audiocpu")->bytes() / 0x4000;
 	for (int i = 0; i < 0x10; i++)
 		m_audiobank->configure_entry(i, memregion("audiocpu")->base() + (i % max) * 0x4000);
 
+	save_pointer(NAME(m_eeprom), 0x2000);
 	save_item(NAME(m_sendval));
 }
 
@@ -140,6 +147,20 @@ void namcos2_base_state::system_reset_w(u8 data)
 }
 
 /*************************************************************/
+/* EEPROM Load/Save and read/write handling                  */
+/*************************************************************/
+
+void namcos2_base_state::eeprom_w(offs_t offset, u8 data)
+{
+	m_eeprom[offset] = data;
+}
+
+u8 namcos2_base_state::eeprom_r(offs_t offset)
+{
+	return m_eeprom[offset];
+}
+
+/*************************************************************/
 /* 68000 Shared protection/random key generator              */
 /*************************************************************
 
@@ -185,8 +206,8 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 		case 3: return 0x1;
 		case 4: return 0x110;
 		case 5: return 0x10;
-		case 6: return 0xb0;
-		case 7: return 0xb0;
+		case 6: return 0xB0;
+		case 7: return 0xB0;
 		}
 		break;
 
@@ -200,41 +221,41 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 	case NAMCOS2_MIRAI_NINJA:
 		switch (offset)
 		{
-		case 7: return 0xb1;
+		case 7: return 0xB1;
 		}
 		break;
 
 	case NAMCOS2_PHELIOS:
 		switch (offset)
 		{
-		case 0: return 0xf0;
-		case 1: return 0xff0;
-		case 2: return 0xb2;
-		case 3: return 0xb2;
-		case 4: return 0xf;
-		case 5: return 0xf00f;
-		case 7: return 0xb2;
+		case 0: return 0xF0;
+		case 1: return 0xFF0;
+		case 2: return 0xB2;
+		case 3: return 0xB2;
+		case 4: return 0xF;
+		case 5: return 0xF00F;
+		case 7: return 0xB2;
 		}
 		break;
 
 	case NAMCOS2_DIRT_FOX_JP:
 		switch (offset)
 		{
-		case 1: return 0xb4;
+		case 1: return 0xB4;
 		}
 		break;
 
 	case NAMCOS2_FINEST_HOUR:
 		switch (offset)
 		{
-		case 7: return 0xbc;
+		case 7: return 0xBC;
 		}
 		break;
 
 	case NAMCOS2_BURNING_FORCE:
 		switch (offset)
 		{
-		case 1: return 0xbd;
+		case 1: return 0xBD;
 		}
 		break;
 
@@ -243,16 +264,16 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 		{
 		case 0: return 0x10;
 		case 1: return 0x110;
-		case 4: return 0xbe;
+		case 4: return 0xBE;
 		case 6: return 0x1001;
-		case 7: return (m_sendval) ? 0xbe : 1;
+		case 7: return (m_sendval) ? 0xBE : 1;
 		}
 		break;
 
 	case NAMCOS2_DRAGON_SABER:
 		switch (offset)
 		{
-		case 2: return 0xc0;
+		case 2: return 0xC0;
 		}
 		break;
 
@@ -264,7 +285,7 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 			{
 				if (!machine().side_effects_disabled())
 					m_sendval = false;
-				return 0x13f;
+				return 0x13F;
 			}
 			break;
 		case 7:
@@ -272,7 +293,7 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 			{
 				if (!machine().side_effects_disabled())
 					m_sendval = false;
-				return 0x13f;
+				return 0x13F;
 			}
 			break;
 		case 2: return 0;
@@ -282,7 +303,7 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 	case NAMCOS2_COSMO_GANG:
 		switch (offset)
 		{
-		case 3: return 0x14a;
+		case 3: return 0x14A;
 		}
 		break;
 
@@ -304,21 +325,21 @@ u16 namcos2_base_state::namcos2_68k_key_r(offs_t offset)
 	case NAMCOS2_SUPER_WSTADIUM_92T:
 		switch (offset)
 		{
-		case 3: return 0x14c;
+		case 3: return 0x14C;
 		}
 		break;
 
 	case NAMCOS2_SUPER_WSTADIUM_93:
 		switch (offset)
 		{
-		case 3: return 0x14e;
+		case 3: return 0x14E;
 		}
 		break;
 
 	case NAMCOS2_SUZUKA_8_HOURS_2:
 		switch (offset)
 		{
-		case 3: return 0x14d;
+		case 3: return 0x14D;
 		case 2: return 0;
 		}
 		break;
@@ -368,6 +389,16 @@ void namcos2_base_state::namcos2_68k_key_w(offs_t offset, u16 data)
 	}
 }
 
+/*************************************************************/
+/* 68000 Interrupt/IO Handlers - CUSTOM 148 - NOT SHARED     */
+/*************************************************************/
+
+/*
+#define NO_OF_LINES     256
+#define FRAME_TIME      (1.0/60.0)
+#define LINE_LENGTH     (FRAME_TIME/NO_OF_LINES)
+*/
+
 
 /**************************************************************/
 /*  Sound sub-system                                          */
@@ -380,9 +411,6 @@ void namcos2_base_state::sound_bankselect_w(u8 data)
 
 u16 namcos2_base_state::c140_rom_r(offs_t offset)
 {
-	if (!m_c140_region)
-		return 0;
-
 	/*
 	    Verified from schematics:
 	    MD0-MD3 : Connected in 3N "voice0" D0-D3 or D4-D7, Nibble changeable with 74LS157
@@ -392,21 +420,22 @@ u16 namcos2_base_state::c140_rom_r(offs_t offset)
 	    MA20 : Connected in 74LS157 Strobe(Enable) Pin
 	    MA21 : ROM select in MD4-MD11 area
 	*/
-	const int romsel = BIT(offset, 21);
-	const bool lsb_en = BIT(~offset, 20);
-	const bool lsb_swap = BIT(~offset, 19);
-
-	offset &= 0x7ffff;
-	u16 ret = m_c140_region[romsel << 19 | offset] & 0xff00; // voice1 or voice2
-
-	if (lsb_en)
+	if (m_c140_region != nullptr)
 	{
-		u8 lsb = m_c140_region[offset] & 0xff; // voice0
-		if (lsb_swap)
-			lsb <<= 4; // D0-D3
+		bool romsel = BIT(offset, 21);
+		bool lsb_en = BIT(~offset, 20);
+		bool lsb_swap = BIT(~offset, 19);
+		offset &= 0x7ffff;
+		u16 ret = m_c140_region[(romsel << 19) | offset] & 0xff00; // voice1 or voice2
+		if (lsb_en)
+		{
+			u8 lsb = m_c140_region[offset] & 0xff; // voice0
+			if (lsb_swap)
+				lsb <<= 4; // D0-D3
 
-		ret |= (lsb & 0xf0);
+			ret |= (lsb & 0xf0);
+		}
+		return ret;
 	}
-
-	return ret;
+	return 0;
 }

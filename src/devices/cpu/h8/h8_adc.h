@@ -6,6 +6,7 @@
 
     H8 Analog to Digital Converter subsystem
 
+
 ***************************************************************************/
 
 #ifndef MAME_CPU_H8_H8_ADC_H

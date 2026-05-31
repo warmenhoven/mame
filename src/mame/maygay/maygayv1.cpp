@@ -128,6 +128,7 @@ Find lamps/reels after UPD changes.
 
 #include "emu.h"
 
+#include "awpvid.h"
 
 #include "cpu/m68000/m68000.h"
 #include "cpu/mcs51/i8052.h"

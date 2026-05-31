@@ -88,7 +88,10 @@ public:
 	gba_cart_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: gba_cart_slot_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	gba_cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
@@ -131,7 +134,7 @@ protected:
 
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(GBA_CART_SLOT, gba_cart_slot_device)
 
 

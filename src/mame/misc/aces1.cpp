@@ -30,6 +30,7 @@ JPM style Reel MCU? Certainly reel data seems to be muxed together in a weird wa
 
 #include "emu.h"
 
+#include "awpvid.h"
 
 #include "cpu/z80/z80.h"
 #include "machine/i8255.h"

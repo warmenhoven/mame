@@ -53,7 +53,15 @@ class cg_exp_slot_device : public device_t, public device_single_card_slot_inter
 {
 public:
 	// construction/destruction
-	cg_exp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
+	cg_exp_slot_device(machine_config const &mconfig, char const *tag, device_t *owner)
+		: cg_exp_slot_device(mconfig, tag, owner, (uint32_t)0)
+	{
+		option_reset();
+		cg_exp_slot_carts(*this);
+		set_default_option(nullptr);
+		set_fixed(false);
+	}
+	cg_exp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~cg_exp_slot_device();
 
 	template <typename T> void set_program_space(T &&tag, int spacenum) { m_program.set_tag(std::forward<T>(tag), spacenum); }
@@ -73,7 +81,7 @@ public:
 	required_address_space m_io;
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	device_cg_exp_interface *m_cart;
@@ -97,7 +105,7 @@ protected:
 	cg_exp_slot_device *m_slot;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(CG_EXP_SLOT, cg_exp_slot_device)
 
 #endif // MAME_BUS_CGENIE_EXPANSION_EXPANSION_H

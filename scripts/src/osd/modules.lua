@@ -154,6 +154,12 @@ function osdmodulesbuild()
 		ext_includedir("asio"),
 	}
 
+	if _OPTIONS["gcc"]~=nil and string.find(_OPTIONS["gcc"], "clang") then
+		buildoptions {
+			"-Wno-unused-private-field",
+		}
+	end
+
 	if _OPTIONS["targetos"]=="windows" then
 		includedirs {
 			MAME_DIR .. "3rdparty/winpcap/Include",
@@ -358,11 +364,6 @@ function qtdebuggerbuild()
 			buildoptions {
 				"-Wno-error=inconsistent-missing-override",
 			}
-			if _OPTIONS["targetos"]=="windows" then
-				buildoptions {
-					"-Wno-ignored-attributes",
-				}
-			end
 		configuration { }
 	end
 
@@ -406,19 +407,7 @@ function qtdebuggerbuild()
 
 		local MOC = ""
 		if (os.is("windows")) then
-			local qt_host_libexecs
-			if _OPTIONS["QT_HOME"]~=nil then
-				qt_host_libexecs = backtick(_OPTIONS["QT_HOME"] .. "/bin/qmake -query QT_HOST_LIBEXECS")
-			else
-				qt_host_libexecs = backtick("qmake6 -query QT_HOST_LIBEXECS")
-			end
-			local MOCTST = backtick(qt_host_libexecs .. "/moc --version")
-			if MOCTST=='' then
-				print("Qt's Meta Object Compiler (moc) wasn't found!")
-				os.exit(1)
-			else
-				MOC = qt_host_libexecs .. "/moc"
-			end
+			MOC = "moc"
 		else
 			if _OPTIONS["QT_HOME"]~=nil then
 				local MOCTST = backtick(_OPTIONS["QT_HOME"] .. "/bin/moc --version 2>/dev/null")
@@ -438,14 +427,15 @@ function qtdebuggerbuild()
 					MOC = _OPTIONS["QT_HOME"] .. "/bin/moc"
 				end
 			else
-				local qt_host_libexecs = backtick("qmake6 -query QT_HOST_LIBEXECS")
-				MOCTST = backtick(qt_host_libexecs .. "/moc --version 2>/dev/null")
+				local MOCTST = backtick("which moc-qt5 2>/dev/null")
+				if MOCTST=='' then
+					MOCTST = backtick("which moc 2>/dev/null")
+				end
 				if MOCTST=='' then
 					print("Qt's Meta Object Compiler (moc) wasn't found!")
 					os.exit(1)
-				else
-					MOC = qt_host_libexecs .. "/moc"
 				end
+				MOC = MOCTST
 			end
 		end
 
@@ -466,7 +456,7 @@ function qtdebuggerbuild()
 		if _OPTIONS["targetos"]=="windows" then
 			configuration { "mingw*" }
 				buildoptions {
-					"-I$(shell qmake6 -query QT_INSTALL_HEADERS)",
+					"-I$(shell qmake -query QT_INSTALL_HEADERS)",
 				}
 			configuration { }
 		elseif _OPTIONS["targetos"]=="macosx" then
@@ -480,7 +470,7 @@ function qtdebuggerbuild()
 				}
 			else
 				buildoptions {
-					"-I$(shell qmake6 -query QT_INSTALL_HEADERS)",
+					backtick(pkgconfigcmd() .. " --cflags Qt5Widgets"),
 				}
 			end
 		end
@@ -528,37 +518,55 @@ function osdmodulestargetconf()
 	if _OPTIONS["USE_QTDEBUG"]=="1" then
 		if _OPTIONS["targetos"]=="windows" then
 			linkoptions {
-				"-L$(shell qmake6 -query QT_INSTALL_LIBS)",
+				"-L$(shell qmake -query QT_INSTALL_LIBS)",
 			}
 			links {
-				"Qt6Core.dll",
-				"Qt6Gui.dll",
-				"Qt6Widgets.dll",
+				"Qt5Core.dll",
+				"Qt5Gui.dll",
+				"Qt5Widgets.dll",
 			}
 		elseif _OPTIONS["targetos"]=="macosx" then
+			local qt_version = str_to_version(backtick("qmake -query QT_VERSION"))
 			linkoptions {
 				"-F" .. backtick("qmake -query QT_INSTALL_LIBS"),
 			}
-			links {
-				"QtCore.framework",
-				"QtGui.framework",
-				"QtWidgets.framework",
-			}
+			if qt_version < 60000 then
+				links {
+					"Qt5Core.framework",
+					"Qt5Gui.framework",
+					"Qt5Widgets.framework",
+				}
+			else
+				links {
+					"QtCore.framework",
+					"QtGui.framework",
+					"QtWidgets.framework",
+				}
+			end
 		else
 			if _OPTIONS["QT_HOME"]~=nil then
+				local qt_version = str_to_version(backtick(_OPTIONS["QT_HOME"] .. "/bin/qmake -query QT_VERSION"))
 				linkoptions {
 					"-L" .. backtick(_OPTIONS["QT_HOME"] .. "/bin/qmake -query QT_INSTALL_LIBS"),
 				}
+				if qt_version < 60000 then
+					links {
+						"Qt5Core",
+						"Qt5Gui",
+						"Qt5Widgets",
+					}
+				else
+					links {
+						"Qt6Core",
+						"Qt6Gui",
+						"Qt6Widgets",
+					}
+				end
 			else
-				linkoptions {
-					"-L$(shell qmake6 -query QT_INSTALL_LIBS)",
-				}
+				local str = backtick(pkgconfigcmd() .. " --libs Qt5Widgets")
+				addlibfromstring(str)
+				addoptionsfromstring(str)
 			end
-			links {
-				"Qt6Core",
-				"Qt6Gui",
-				"Qt6Widgets",
-			}
 		end
 	end
 
@@ -708,6 +716,15 @@ if not _OPTIONS["NO_USE_PIPEWIRE"] then
 		_OPTIONS["NO_USE_PIPEWIRE"] = "1"
 	end
 end
+
+newoption {
+	trigger = "MODERN_WIN_API",
+	description = "Use Modern Windows APIs",
+	allowed = {
+		{ "0",  "Use classic Windows APIs - allows support for XP and later"   },
+		{ "1",  "Use Modern Windows APIs - support for Windows 8.1 and later"  },
+	},
+}
 
 newoption {
 	trigger = "USE_QTDEBUG",

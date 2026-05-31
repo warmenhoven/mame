@@ -50,7 +50,10 @@ public:
 	apricot_keyboard_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt)
 		: apricot_keyboard_bus_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	apricot_keyboard_bus_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~apricot_keyboard_bus_device();
@@ -65,7 +68,7 @@ public:
 	void out_w(int state);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 private:
@@ -91,7 +94,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(APRICOT_KEYBOARD_INTERFACE, apricot_keyboard_bus_device)
 
 // supported devices

@@ -82,7 +82,7 @@ emu::detail::device_registrar const registered_device_types;
 //  from the provided config
 //-------------------------------------------------
 
-device_t::device_t(const machine_config &mconfig, device_type type, std::string_view tag, device_t *owner, u32 clock)
+device_t::device_t(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, u32 clock)
 	: m_type(type)
 	, m_owner(owner)
 	, m_next(nullptr)
@@ -106,19 +106,10 @@ device_t::device_t(const machine_config &mconfig, device_type type, std::string_
 	, m_started(false)
 	, m_auto_finder_list(nullptr)
 {
-	if (owner)
-	{
-		if (owner->owner())
-			m_tag = owner->tag();
-		else
-			m_tag.clear();
-		m_tag += ":";
-		m_tag += tag;
-	}
+	if (owner != nullptr)
+		m_tag.assign((owner->owner() == nullptr) ? "" : owner->tag()).append(":").append(tag);
 	else
-	{
-		m_tag = ":";
-	}
+		m_tag.assign(":");
 	set_clock(clock);
 }
 

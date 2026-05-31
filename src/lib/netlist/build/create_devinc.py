@@ -35,24 +35,20 @@ def process_entry_external(srcfile, name):
 
 def process_entry(srcfile, name, params):
     process_srcfile(srcfile)
+    p = re.sub("\+","",params)
+    ps = p.split(",")
     pusage = ""
     pauto = ""
-    pcount = 0
-    for x in params.split(","):
-        if x.startswith('@'):
+    for x in ps:
+        if x[0:1] == "@":
             pauto = pauto + ", " + x[1:]
-        elif len(x) > 0:
-            if x.startswith('+'):
-                x = x[1:]
+        else:
             pusage = pusage + ", " + x
-            pcount += 1
     print("// usage       : {}(name{})".format(name, pusage))
     if len(pauto) > 0:
         print("// auto connect: {}".format(pauto[2:]))
-    print("#define {}(name{}) \\".format(name, ", ..." if pcount > 0 else ""))
-    if pcount > 0:
-        print("\t__VA_OPT__(NET_CHECK_PARAM_COUNT({}, PNARGS(__VA_ARGS__), {})) \\".format(name, pcount))
-    print("\tNET_REGISTER_DEV({}, name{})".format(name, " __VA_OPT__(,) __VA_ARGS__" if pcount > 0 else ""))
+    print("#define {}(...)                                                   \\".format(name))
+    print("\tNET_REGISTER_DEVEXT({}, __VA_ARGS__)".format(name))
     print("")
 
 
@@ -101,9 +97,6 @@ def file_header():
     print("#ifndef __PLIB_PREPROCESSOR__\n")
     print("")
     print("#include \"../nl_setup.h\"")
-    print("")
-    print("#define NET_CHECK_PARAM_COUNT(dev, nargs, N) \\")
-    print("\tstatic_assert(nargs == N, #dev\": Mismatched number of parameters passed, expected \" #N \" but got \" PSTRINGIFY(nargs));")
     print("")
 
 def file_footer():

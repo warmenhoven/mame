@@ -45,8 +45,8 @@ enum {
 
 } // anonymous namespace
 
-menu_audio_mixer::menu_audio_mixer(mame_ui_manager &mui, render_target &target)
-	: menu(mui, target)
+menu_audio_mixer::menu_audio_mixer(mame_ui_manager &mui, render_container &container)
+	: menu(mui, container)
 	, m_generation(0)
 	, m_reset_item(0)
 {

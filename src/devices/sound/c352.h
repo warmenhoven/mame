@@ -7,8 +7,6 @@
 
 #include "dirom.h"
 
-#include <map>
-
 //**************************************************************************
 //  TYPE DEFINITIONS
 //**************************************************************************
@@ -83,7 +81,7 @@ private:
 		u16 freq;
 		u16 flags;
 
-		u16 wave_bank;
+		u16  wave_bank;
 		u16 wave_start;
 		u16 wave_end;
 		u16 wave_loop;
@@ -92,7 +90,6 @@ private:
 
 	void fetch_sample(c352_voice_t &v);
 	void ramp_volume(c352_voice_t &v, int ch, u8 val);
-	void log_pcm(int voice);
 
 	sound_stream *m_stream;
 
@@ -104,9 +101,7 @@ private:
 	s16 m_mulawtab[256];
 
 	u16 m_random;
-	u16 m_control; // control flags, purpose unknown
-
-	std::map<u32, bool> m_found_pcm; // only for log_pcm
+	u16 m_control; // control flags, purpose unknown.
 };
 
 

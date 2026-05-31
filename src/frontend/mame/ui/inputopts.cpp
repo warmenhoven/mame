@@ -69,8 +69,8 @@ void scan_inputs(running_machine &machine, bool &inputmap, bool &analog, bool &t
 } // anonymous namespace
 
 
-menu_input_options::menu_input_options(mame_ui_manager &mui, render_target &target)
-	: menu(mui, target)
+menu_input_options::menu_input_options(mame_ui_manager &mui, render_container &container)
+	: menu(mui, container)
 {
 	set_heading(_("menu-inputopts", "Input Settings"));
 }
@@ -118,22 +118,22 @@ bool menu_input_options::handle(event const *ev)
 		switch (uintptr_t(ev->itemref))
 		{
 		case INPUTMAP_GENERAL:
-			stack_push<menu_input_groups>(ui(), target());
+			stack_push<menu_input_groups>(ui(), container());
 			break;
 		case INPUTMAP_MACHINE:
-			stack_push<menu_input_specific>(ui(), target());
+			stack_push<menu_input_specific>(ui(), container());
 			break;
 		case ANALOG:
-			stack_push<menu_analog>(ui(), target());
+			stack_push<menu_analog>(ui(), container());
 			break;
 		case KEYBOARD:
-			stack_push<menu_keyboard_mode>(ui(), target());
+			stack_push<menu_keyboard_mode>(ui(), container());
 			break;
 		case TOGGLES:
-			stack_push<menu_input_toggles>(ui(), target());
+			stack_push<menu_input_toggles>(ui(), container());
 			break;
 		case INPUTDEV:
-			stack_push<menu_input_devices>(ui(), target());
+			stack_push<menu_input_devices>(ui(), container());
 			break;
 		}
 	}

@@ -40,6 +40,7 @@
 
 #include "emu.h"
 
+#include "awpvid.h" // drawing reels
 
 #include "cpu/z80/z80.h"
 #include "machine/i8251.h"
@@ -171,7 +172,7 @@ void ecoinfr_state::ec_port00_out_w(uint8_t data)
 
 	m_reel[0]->update(data&0x0f);
 
-	m_reel[0]->draw();
+	awp_draw_reel(machine(),"reel1", *m_reel[0]);
 }
 
 void ecoinfr_state::ec_port01_out_w(uint8_t data)
@@ -183,7 +184,7 @@ void ecoinfr_state::ec_port01_out_w(uint8_t data)
 
 	m_reel[1]->update(data&0x0f);
 
-	m_reel[1]->draw();
+	awp_draw_reel(machine(),"reel2", *m_reel[1]);
 }
 
 void ecoinfr_state::ec_port02_out_w(uint8_t data)
@@ -195,7 +196,7 @@ void ecoinfr_state::ec_port02_out_w(uint8_t data)
 
 	m_reel[2]->update(data&0x0f);
 
-	m_reel[2]->draw();
+	awp_draw_reel(machine(),"reel3", *m_reel[2]);
 }
 
 

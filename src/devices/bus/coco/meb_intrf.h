@@ -30,7 +30,10 @@ public:
 	distomeb_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock, T &&opts, const char *dflt)
 		: distomeb_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	distomeb_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
@@ -45,7 +48,7 @@ public:
 	int get_cart_line() { return m_cart_line; }
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 private:
@@ -54,7 +57,7 @@ private:
 	device_distomeb_interface *m_cart;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(DISTOMEB_SLOT, distomeb_slot_device)
 
 

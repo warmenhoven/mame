@@ -803,7 +803,8 @@ void coco_state::poll_keyboard()
 
 
 //-------------------------------------------------
-//  update_keyboard_input - writes to PIA0 PA
+//  update_keyboard_input - writes to PIA0 PA, but
+//  on the CoCo 3 controls a GIME input
 //-------------------------------------------------
 
 void coco_state::update_keyboard_input(uint8_t value)

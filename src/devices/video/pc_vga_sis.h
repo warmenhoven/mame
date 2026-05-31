@@ -43,8 +43,6 @@ public:
 		vga.memory[address % vga.svga_intf.vram_size] = data;
 	}
 
-	virtual uint8_t get_video_depth() override;
-
 protected:
 	sis6326_vga_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 
@@ -85,12 +83,7 @@ protected:
 	u8 m_turbo_queue_address;
 	u8 m_page_size_select;
 	u8 m_dram_fb_size;
-	union FAST_PAGE {
-		u8 b[4];
-		u32 u;
-	};
-	FAST_PAGE m_fast_page_address_latch;
-	u32 m_fast_page_address;
+	u8 m_fast_page_address_latch[3];
 	u8 m_ext_sr33;
 	u8 m_ext_sr34;
 	u8 m_ext_sr35;

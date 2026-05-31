@@ -59,14 +59,7 @@ device_slot_interface::~device_slot_interface()
 
 void device_slot_interface::interface_validity_check(validity_checker &valid) const
 {
-	// prohibit tags for driver-level slot devices from clashing with image instance names to prevent errors when adding options
-	if (device().owner() != nullptr && device().owner()->owner() == nullptr)
-	{
-		device_image_interface const *image;
-		if (device().interface(image) && (device().basetag() == image->instance_name() || device().basetag() == image->brief_instance_name()))
-			osd_printf_error("Slot device tag conflicts with image instance name\n");
-	}
-
+	// TODO: cast m_default_option to std::string_view when we have C++20
 	if (m_default_option && (m_options.find(m_default_option) == m_options.end()))
 		osd_printf_error("Default option '%s' does not correspond to any configured option\n", m_default_option);
 }
@@ -93,7 +86,8 @@ device_slot_interface::slot_option &device_slot_interface::do_replace_option(std
 	if (name.empty())
 		throw emu_fatalerror("slot '%s' attempt to replace option without name\n", device().tag());
 
-	auto const found = m_options.find(name);
+	// TODO: get rid of temporary std::string when we have C++20
+	auto const found = m_options.find(std::string(name));
 	if (found == m_options.end())
 		throw emu_fatalerror("slot '%s' attempt to replace nonexistent option '%s'\n", device().tag(), name);
 
@@ -107,17 +101,16 @@ void device_slot_interface::option_remove(std::string_view name)
 	if (name.empty())
 		throw emu_fatalerror("slot '%s' attempt to remove option without name\n", device().tag());
 
-	auto const it = m_options.find(name);
-	if (m_options.end() == it)
+	// TODO: get rid of temporary std::string when we have C++20
+	if (m_options.erase(std::string(name)) == 0)
 		throw emu_fatalerror("slot '%s' attempt to remove nonexistent option '%s'\n", device().tag(), name);
-
-	m_options.erase(it);
 }
 
 
 device_slot_interface::slot_option &device_slot_interface::config_option(std::string_view name)
 {
-	auto const found = m_options.find(name);
+	// TODO: get rid of temporary std::string when we have C++20
+	auto const found = m_options.find(std::string(name));
 	if (found != m_options.end())
 		return *found->second;
 
@@ -141,7 +134,8 @@ bool device_slot_interface::has_selectable_options() const
 
 device_slot_interface::slot_option const *device_slot_interface::option(std::string_view name) const
 {
-	auto const found = m_options.find(name);
+	// TODO: get rid of temporary std::string when we have C++20
+	auto const found = m_options.find(std::string(name));
 	if (found != m_options.end())
 		return found->second.get();
 

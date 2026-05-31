@@ -118,15 +118,14 @@ protected:
 	void enable();
 	void disable();
 	u8 num_follow() const noexcept { return m_num_follow; }
-	int is_ready();
+	virtual int is_ready();
 	void interrupt_check();
 	void trigger_interrupt(int level);
-	void do_read();
+	virtual void do_read();
 	void do_write();
 	void do_transfer_write();
 	void do_search();
 	void setup_next_read(int rr);
-	virtual void reset_byte_counter() { m_byte_counter = 0; };
 
 	virtual TIMER_CALLBACK_MEMBER(clock_w);
 

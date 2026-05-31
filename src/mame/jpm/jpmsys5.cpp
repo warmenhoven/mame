@@ -253,25 +253,25 @@ void jpmsys5_state::reel_0123_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 	if (m_reel[0])
 	{
 		m_reel[0]->update(reel_interface_table[(data >> 0) & 0x03]);
-		m_reel[0]->draw();
+		awp_draw_reel(machine(), "reel1", *m_reel[0]);
 	}
 
 	if (m_reel[1])
 	{
 		m_reel[1]->update(reel_interface_table[(data >> 4) & 0x03]);
-		m_reel[1]->draw();
+		awp_draw_reel(machine(), "reel2", *m_reel[1]);
 	}
 
 	if (m_reel[2])
 	{
 		m_reel[2]->update(reel_interface_table[(data >> 8) & 0x03]);
-		m_reel[2]->draw();
+		awp_draw_reel(machine(), "reel3", *m_reel[2]);
 	}
 
 	if (m_reel[3])
 	{
 		m_reel[3]->update(reel_interface_table[(data >> 12) & 0x03]);
-		m_reel[3]->draw();
+		awp_draw_reel(machine(), "reel4", *m_reel[3]);
 	}
 }
 
@@ -285,23 +285,23 @@ void jpmsys5_state::reel_4567_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 	if (m_reel[4])
 	{
 		m_reel[4]->update(reel_interface_table[(data >> 0) & 0x03]);
-		m_reel[4]->draw();
+		awp_draw_reel(machine(), "reel5", *m_reel[4]);
 	}
 	if (m_reel[5])
 	{
 		m_reel[5]->update(reel_interface_table[(data >> 4) & 0x03]);
-		m_reel[5]->draw();
+		awp_draw_reel(machine(), "reel6", *m_reel[5]);
 	}
 #if 0
 	if (m_reel[6])
 	{
 		m_reel[6]->update(reel_interface_table[(data >> 8) & 0x03]);
-		m_reel[6]->draw();
+		awp_draw_reel(machine(), "reel6", *m_reel[6]);
 	}
 	if (m_reel[7])
 	{
 		m_reel[7]->update(reel_interface_table[(data >> 12) & 0x03]);
-		m_reel[7]->draw();
+		awp_draw_reel(machine(), "reel7", *m_reel[7]);
 	}
 #endif
 }

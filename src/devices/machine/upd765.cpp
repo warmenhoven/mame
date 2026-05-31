@@ -3603,3 +3603,4 @@ void hd63266f_device::index_callback(floppy_image_device *floppy, int state)
 	}
 	upd765_family_device::index_callback(floppy, state);
 }
+

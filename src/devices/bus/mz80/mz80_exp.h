@@ -18,7 +18,10 @@ public:
 	mz80_exp_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: mz80_exp_slot_device(mconfig, tag, owner, (uint32_t)0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	mz80_exp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 	virtual ~mz80_exp_slot_device();
@@ -71,7 +74,7 @@ protected:
 
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(MZ80_EXP_SLOT, mz80_exp_slot_device)
 
 void mz800_exp_devices(device_slot_interface &device);

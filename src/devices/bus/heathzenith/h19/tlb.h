@@ -431,7 +431,10 @@ public:
 	heath_tlb_connector(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt, bool fixed = false) :
 		 heath_tlb_connector(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 	}
 
 	heath_tlb_connector(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock = 0);
@@ -471,7 +474,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(HEATH_TLB_CONNECTOR, heath_tlb_connector)
 
 #endif // MAME_BUS_HEATHZENITH_H19_TLB_H

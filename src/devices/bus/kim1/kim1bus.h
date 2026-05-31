@@ -104,7 +104,10 @@ public:
 	kim1bus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, T &&kim1bus_tag, U &&opts, const char *dflt)
 		: kim1bus_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<U>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 		m_kim1bus.set_tag(std::forward<T>(kim1bus_tag));
 	}
 	kim1bus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -120,7 +123,7 @@ protected:
 	required_device<kim1bus_device> m_kim1bus;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(KIM1BUS_SLOT, kim1bus_slot_device)
 
 
@@ -165,7 +168,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(KIM1BUS, kim1bus_device)
 
 // ======================> device_kim1bus_card_interface

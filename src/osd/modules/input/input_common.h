@@ -27,7 +27,6 @@
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <span>
 
 
 //============================================================
@@ -107,16 +106,11 @@ public:
 	{
 	}
 
-	void queue_event(TEvent const &event)
-	{
-		queue_events(std::span<TEvent const>(&event, 1));
-	}
-
-	void queue_events(std::span<TEvent const> events)
+	void queue_events(TEvent const *events, int count)
 	{
 		std::lock_guard<std::mutex> scope_lock(m_device_lock);
-		for (TEvent const &event : events)
-			m_event_queue.push(event);
+		for (int i = 0; i < count; i++)
+			m_event_queue.push(events[i]);
 
 		// If we've gone over the size, remove old events from the queue
 		while (m_event_queue.size() > DEFAULT_EVENT_QUEUE_SIZE)

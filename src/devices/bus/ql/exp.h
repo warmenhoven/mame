@@ -87,7 +87,10 @@ public:
 	ql_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, T &&opts, const char *dflt)
 		: ql_expansion_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	ql_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -108,7 +111,7 @@ public:
 	void extintl_w(int state) { m_write_extintl(state); }
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_resolve_objects() override ATTR_COLD;
 	virtual void device_start() override ATTR_COLD;
 
@@ -121,7 +124,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(QL_EXPANSION_SLOT, ql_expansion_slot_device)
 
 

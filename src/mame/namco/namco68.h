@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:David Haywood, K.Wilkins
+// copyright-holders:David Haywood
 #ifndef MAME_NAMCO_NAMCO68_H
 #define MAME_NAMCO_NAMCO68_H
 

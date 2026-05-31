@@ -50,7 +50,10 @@ public:
 	comx_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock, T &&opts, const char *dflt)
 		: comx_expansion_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	comx_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -74,7 +77,7 @@ public:
 	void tpb_w(int state);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	devcb_write_line   m_write_irq;

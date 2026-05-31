@@ -35,7 +35,10 @@ public:
 		dio16_slot_device(mconfig, tag, owner, clock)
 	{
 		set_dio(std::forward<T>(dio_tag));
-		set_options(std::forward<U>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 	}
 	dio16_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -45,7 +48,7 @@ public:
 protected:
 	dio16_slot_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 
-	// device_t implementation
+	// device-level overrides
 	virtual void device_resolve_objects() override ATTR_COLD;
 	virtual void device_validity_check(validity_checker &valid) const override;
 	virtual void device_start() override ATTR_COLD;
@@ -128,7 +131,7 @@ protected:
 	dio16_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 	void install_space(int spacenum, offs_t start, offs_t end, read8_delegate rhandler, write8_delegate whandler);
 
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
 
@@ -230,12 +233,15 @@ public:
 		dio32_slot_device(mconfig, tag, owner, clock)
 	{
 		set_dio(std::forward<T>(dio_tag));
-		set_options(std::forward<U>(opts), dflt, fixed);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(fixed);
 	}
 	dio32_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 };
 
@@ -249,7 +255,7 @@ public:
 	void install16_device(offs_t start, offs_t end, read16_delegate rhandler, write16_delegate whandler);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 };
 
@@ -273,7 +279,7 @@ protected:
 
 } // namespace bus::hp_dio
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE_NS(DIO16_SLOT, bus::hp_dio, dio16_slot_device)
 DECLARE_DEVICE_TYPE_NS(DIO32, bus::hp_dio, dio32_device)
 DECLARE_DEVICE_TYPE_NS(DIO32_SLOT, bus::hp_dio, dio32_slot_device)

@@ -101,7 +101,10 @@ public:
 		: cbus_slot_device(mconfig, tag, owner, clock)
 	{
 		m_bus.set_tag(std::forward<T>(bus_tag));
-		set_options(std::forward<U>(slot_options), default_option, fixed);
+		option_reset();
+		slot_options(*this);
+		set_default_option(default_option);
+		set_fixed(fixed);
 	}
 	cbus_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 
@@ -210,7 +213,10 @@ public:
 		: srx_slot_device(mconfig, tag, owner, clock)
 	{
 		m_bus.set_tag(std::forward<T>(bus_tag));
-		set_options(std::forward<U>(slot_options), default_option, fixed);
+		option_reset();
+		slot_options(*this);
+		set_default_option(default_option);
+		set_fixed(fixed);
 	}
 	srx_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
 

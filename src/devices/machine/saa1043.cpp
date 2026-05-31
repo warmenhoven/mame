@@ -4,7 +4,7 @@
 
     Philips SAA1043 Universal Sync Generator
 
-    TODO:
+    TOOD:
     - Everything.
 
 ***********************************************************************/

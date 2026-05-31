@@ -756,7 +756,7 @@ void namcos1_state::init_bakutotu()
 }
 
 /*******************************************************************************
-*   Splatterhouse specific (CUS181)                                            *
+*   Splatter House specific (CUS181)                                           *
 *******************************************************************************/
 void namcos1_state::init_splatter()
 {

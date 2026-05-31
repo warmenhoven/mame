@@ -37,6 +37,7 @@
 #include "drcbearm64.h"
 #include "drcbec.h"
 #include "drcbex64.h"
+#include "drcbex86.h"
 
 #include "emuopts.h"
 
@@ -60,15 +61,17 @@
 //**************************************************************************
 
 // determine the type of the native DRC, falling back to C
-#if !defined(NATIVE_DRC)
+#ifndef NATIVE_DRC
 #if !defined(MAME_NOASM) && (defined(__x86_64__) || defined(_M_X64))
 #define NATIVE_DRC drcbe_x64
+#elif !defined(MAME_NOASM) && (defined(__i386__) || defined(_M_IX86))
+#define NATIVE_DRC drcbe_x86
 #elif !defined(MAME_NOASM) && (defined(__aarch64__) || defined(_M_ARM64))
 #define NATIVE_DRC drcbe_arm64
 #else
 #define NATIVE_DRC drcbe_c
 #endif
-#endif // !defined(NATIVE_DRC)
+#endif
 
 #define MAKE_DRCBE_IMPL(name) make_##name
 #define MAKE_DRCBE(name) MAKE_DRCBE_IMPL(name)

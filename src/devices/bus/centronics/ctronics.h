@@ -27,7 +27,10 @@ public:
 	centronics_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt)
 		: centronics_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	centronics_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -76,7 +79,7 @@ public:
 	void write_select_in(int state);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_config_complete() override;
 	virtual void device_reset() override ATTR_COLD;
 	virtual void device_start() override ATTR_COLD;

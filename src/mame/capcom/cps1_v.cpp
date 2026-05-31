@@ -473,11 +473,11 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 
 // Game specific data
 
-static constexpr unsigned GFXTYPE_SPRITES = (1 << 0);
-static constexpr unsigned GFXTYPE_SCROLL1 = (1 << 1);
-static constexpr unsigned GFXTYPE_SCROLL2 = (1 << 2);
-static constexpr unsigned GFXTYPE_SCROLL3 = (1 << 3);
-static constexpr unsigned GFXTYPE_STARS   = (1 << 4);
+#define GFXTYPE_SPRITES   (1<<0)
+#define GFXTYPE_SCROLL1   (1<<1)
+#define GFXTYPE_SCROLL2   (1<<2)
+#define GFXTYPE_SCROLL3   (1<<3)
+#define GFXTYPE_STARS     (1<<4)
 
 
 #define __not_applicable__  -1,-1,-1,-1,-1,-1,-1
@@ -2043,6 +2043,33 @@ static const struct CPS1config cps1_config_table[]=
 };
 
 
+
+// Offset of each palette entry
+#define cps1_palette_entries    (32*6)      // Number colour schemes in palette
+
+
+// CPS-A registers
+#define CPS1_OBJ_BASE           (0x00/2)    // Base address of objects
+#define CPS1_SCROLL1_BASE       (0x02/2)    // Base address of scroll 1
+#define CPS1_SCROLL2_BASE       (0x04/2)    // Base address of scroll 2
+#define CPS1_SCROLL3_BASE       (0x06/2)    // Base address of scroll 3
+#define CPS1_OTHER_BASE         (0x08/2)    // Base address of other video
+#define CPS1_PALETTE_BASE       (0x0a/2)    // Base address of palette
+#define CPS1_SCROLL1_SCROLLX    (0x0c/2)    // Scroll 1 X
+#define CPS1_SCROLL1_SCROLLY    (0x0e/2)    // Scroll 1 Y
+#define CPS1_SCROLL2_SCROLLX    (0x10/2)    // Scroll 2 X
+#define CPS1_SCROLL2_SCROLLY    (0x12/2)    // Scroll 2 Y
+#define CPS1_SCROLL3_SCROLLX    (0x14/2)    // Scroll 3 X
+#define CPS1_SCROLL3_SCROLLY    (0x16/2)    // Scroll 3 Y
+#define CPS1_STARS1_SCROLLX     (0x18/2)    // Stars 1 X
+#define CPS1_STARS1_SCROLLY     (0x1a/2)    // Stars 1 Y
+#define CPS1_STARS2_SCROLLX     (0x1c/2)    // Stars 2 X
+#define CPS1_STARS2_SCROLLY     (0x1e/2)    // Stars 2 Y
+#define CPS1_ROWSCROLL_OFFS     (0x20/2)    // base of row scroll offsets in other RAM
+#define CPS1_VIDEOCONTROL       (0x22/2)    // flip screen, rowscroll enable
+
+
+
 MACHINE_RESET_MEMBER(cps_state,cps)
 {
 	const char *gamename = machine().system().name;
@@ -2153,11 +2180,11 @@ uint16_t cps_state::cps1_cps_b_r(offs_t offset)
 
 	// Extra input ports (on C-board)
 	if (m_game_config->in2_addr != 0 && offset == m_game_config->in2_addr / 2)
-		return m_io_in[2]->read();
+		return ioport("IN2")->read();
 
 	// Player 4 controls (on C-board) ("Captain Commando")
 	if (m_game_config->in3_addr != 0 && offset == m_game_config->in3_addr / 2)
-		return m_io_in[3]->read();
+		return ioport("IN3")->read();
 
 	// raster counters for cps2 & ganbare
 	if (m_raster_irq != nullptr)
@@ -2210,15 +2237,15 @@ void cps_state::cps1_cps_b_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 		{
 			if (m_game_config->cpsb_value == 0x0402) // Mercs (CN2 connector)
 			{
-				machine().bookkeeping().coin_lockout_w(2, BIT(~data, 0));
+				machine().bookkeeping().coin_lockout_w(2, ~data & 0x01);
 				m_led_cboard[0] = BIT(data, 1);
 				m_led_cboard[1] = BIT(data, 2);
 				m_led_cboard[2] = BIT(data, 3);
 			}
 			else // kod, captcomm, knights
 			{
-				machine().bookkeeping().coin_lockout_w(2, BIT(~data, 1));
-				machine().bookkeeping().coin_lockout_w(3, BIT(~data, 3));
+				machine().bookkeeping().coin_lockout_w(2, ~data & 0x02);
+				machine().bookkeeping().coin_lockout_w(3, ~data & 0x08);
 			}
 		}
 	}
@@ -2245,27 +2272,27 @@ void cps_state::cps1_cps_b_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 
 void cps_state::cps1_get_video_base()
 {
-	int scroll1xoff = 0, scroll2xoff = 0, scroll3xoff = 0;
+	int layercontrol=0, videocontrol=0, scroll1xoff=0, scroll2xoff=0, scroll3xoff=0;
 
 	// Re-calculate the VIDEO RAM base
-	if (m_scroll[0] != cps1_base(CPS1_SCROLL1_BASE, m_scroll_size))
+	if (m_scroll1 != cps1_base(CPS1_SCROLL1_BASE, m_scroll_size))
 	{
-		m_scroll[0] = cps1_base(CPS1_SCROLL1_BASE, m_scroll_size);
+		m_scroll1 = cps1_base(CPS1_SCROLL1_BASE, m_scroll_size);
 		m_bg_tilemap[0]->mark_all_dirty();
 	}
-	if (m_scroll[1] != cps1_base(CPS1_SCROLL2_BASE, m_scroll_size))
+	if (m_scroll2 != cps1_base(CPS1_SCROLL2_BASE, m_scroll_size))
 	{
-		m_scroll[1] = cps1_base(CPS1_SCROLL2_BASE, m_scroll_size);
+		m_scroll2 = cps1_base(CPS1_SCROLL2_BASE, m_scroll_size);
 		m_bg_tilemap[1]->mark_all_dirty();
 	}
-	if (m_scroll[2] != cps1_base(CPS1_SCROLL3_BASE, m_scroll_size))
+	if (m_scroll3 != cps1_base(CPS1_SCROLL3_BASE, m_scroll_size))
 	{
-		m_scroll[2] = cps1_base(CPS1_SCROLL3_BASE, m_scroll_size);
+		m_scroll3 = cps1_base(CPS1_SCROLL3_BASE, m_scroll_size);
 		m_bg_tilemap[2]->mark_all_dirty();
 	}
 
 	// Some of the sf2 hacks use only sprite port 0x9100 and the scroll layers are offset
-	const uint8_t kludge = m_game_config->bootleg_kludge & 15;
+	u8 kludge = m_game_config->bootleg_kludge & 15;
 	if (kludge == 0x01)
 	{
 		m_cps_a_regs[CPS1_OBJ_BASE] = 0x9100;
@@ -2314,23 +2341,23 @@ void cps_state::cps1_get_video_base()
 	m_other = cps1_base(CPS1_OTHER_BASE, m_other_size);
 
 	// Get scroll values
-	m_scrollx[0] = m_cps_a_regs[CPS1_SCROLL1_SCROLLX] + scroll1xoff;
-	m_scrolly[0] = m_cps_a_regs[CPS1_SCROLL1_SCROLLY];
-	m_scrollx[1] = m_cps_a_regs[CPS1_SCROLL2_SCROLLX] + scroll2xoff;
-	m_scrolly[1] = m_cps_a_regs[CPS1_SCROLL2_SCROLLY];
-	m_scrollx[2] = m_cps_a_regs[CPS1_SCROLL3_SCROLLX] + scroll3xoff;
-	m_scrolly[2] = m_cps_a_regs[CPS1_SCROLL3_SCROLLY];
-	m_starsx[0] = m_cps_a_regs[CPS1_STARS1_SCROLLX];
-	m_starsy[0] = m_cps_a_regs[CPS1_STARS1_SCROLLY];
-	m_starsx[1] = m_cps_a_regs[CPS1_STARS2_SCROLLX];
-	m_starsy[1] = m_cps_a_regs[CPS1_STARS2_SCROLLY];
+	m_scroll1x = m_cps_a_regs[CPS1_SCROLL1_SCROLLX] + scroll1xoff;
+	m_scroll1y = m_cps_a_regs[CPS1_SCROLL1_SCROLLY];
+	m_scroll2x = m_cps_a_regs[CPS1_SCROLL2_SCROLLX] + scroll2xoff;
+	m_scroll2y = m_cps_a_regs[CPS1_SCROLL2_SCROLLY];
+	m_scroll3x = m_cps_a_regs[CPS1_SCROLL3_SCROLLX] + scroll3xoff;
+	m_scroll3y = m_cps_a_regs[CPS1_SCROLL3_SCROLLY];
+	m_stars1x = m_cps_a_regs[CPS1_STARS1_SCROLLX];
+	m_stars1y = m_cps_a_regs[CPS1_STARS1_SCROLLY];
+	m_stars2x = m_cps_a_regs[CPS1_STARS2_SCROLLX];
+	m_stars2y = m_cps_a_regs[CPS1_STARS2_SCROLLY];
 
 	// Get layer enable bits
-	const uint16_t layercontrol = m_cps_b_regs[m_game_config->layer_control / 2];
-	const uint16_t videocontrol = m_cps_a_regs[CPS1_VIDEOCONTROL];
+	layercontrol = m_cps_b_regs[m_game_config->layer_control / 2];
+	videocontrol = m_cps_a_regs[CPS1_VIDEOCONTROL];
 	m_bg_tilemap[0]->enable(layercontrol & m_game_config->layer_enable_mask[0]);
-	m_bg_tilemap[1]->enable((layercontrol & m_game_config->layer_enable_mask[1]) && BIT(videocontrol, 2));
-	m_bg_tilemap[2]->enable((layercontrol & m_game_config->layer_enable_mask[2]) && BIT(videocontrol, 3));
+	m_bg_tilemap[1]->enable((layercontrol & m_game_config->layer_enable_mask[1]) && (videocontrol & 4));
+	m_bg_tilemap[2]->enable((layercontrol & m_game_config->layer_enable_mask[2]) && (videocontrol & 8));
 	m_stars_enabled[0] = layercontrol & m_game_config->layer_enable_mask[3];
 	m_stars_enabled[1] = layercontrol & m_game_config->layer_enable_mask[4];
 
@@ -2367,7 +2394,7 @@ void cps_state::cps1_get_video_base()
 
 void cps_state::cps1_gfxram_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 {
-	const int page = (offset >> 7) & 0x3c0;
+	int page = (offset >> 7) & 0x3c0;
 	COMBINE_DATA(&m_gfxram[offset]);
 
 	if (page == (m_cps_a_regs[CPS1_SCROLL1_BASE] & 0x3c0))
@@ -2382,7 +2409,7 @@ void cps_state::cps1_gfxram_w(offs_t offset, uint16_t data, uint16_t mem_mask)
 
 
 
-int cps_state::gfxrom_bank_mapper(int type, int code)
+int cps_state::gfxrom_bank_mapper( int type, int code )
 {
 	const struct gfx_range *range = m_game_config->bank_mapper;
 	int shift = 0;
@@ -2406,8 +2433,9 @@ int cps_state::gfxrom_bank_mapper(int type, int code)
 			if (range->type & type)
 			{
 				int base = 0;
+				int i;
 
-				for (int i = 0; i < range->bank; ++i)
+				for (i = 0; i < range->bank; ++i)
 					base += m_game_config->bank_sizes[i];
 
 				return (base + (code & (m_game_config->bank_sizes[range->bank] - 1))) >> shift;
@@ -2451,15 +2479,16 @@ TILEMAP_MAPPER_MEMBER(cps_state::tilemap2_scan)
 
 TILE_GET_INFO_MEMBER(cps_state::get_tile0_info)
 {
-	int code = m_scroll[0][2 * tile_index];
-	const uint16_t attr = m_scroll[0][2 * tile_index + 1];
+	int code = m_scroll1[2 * tile_index];
+	int attr = m_scroll1[2 * tile_index + 1];
+	int gfxset;
 
 	code = gfxrom_bank_mapper(GFXTYPE_SCROLL1, code);
 
 	// allows us to reproduce a problem seen with a ffight board where USA and Japanese
 	// roms have been mixed to be reproduced (ffightub) -- it looks like each column
 	// should alternate between the left and right side of the 16x16 tiles
-	const uint8_t gfxset = BIT(tile_index, 5);
+	gfxset = (tile_index & 0x20) >> 5;
 
 	tileinfo.set(gfxset,
 			code,
@@ -2475,8 +2504,8 @@ TILE_GET_INFO_MEMBER(cps_state::get_tile0_info)
 
 TILE_GET_INFO_MEMBER(cps_state::get_tile1_info)
 {
-	int code = m_scroll[1][2 * tile_index];
-	const uint16_t attr = m_scroll[1][2 * tile_index + 1];
+	int code = m_scroll2[2 * tile_index];
+	int attr = m_scroll2[2 * tile_index + 1];
 
 	code = gfxrom_bank_mapper(GFXTYPE_SCROLL2, code);
 
@@ -2493,8 +2522,8 @@ TILE_GET_INFO_MEMBER(cps_state::get_tile1_info)
 
 TILE_GET_INFO_MEMBER(cps_state::get_tile2_info)
 {
-	int code = m_scroll[2][2 * tile_index] & 0x3fff;
-	const uint16_t attr = m_scroll[2][2 * tile_index + 1];
+	int code = m_scroll3[2 * tile_index] & 0x3fff;
+	int attr = m_scroll3[2 * tile_index + 1];
 
 	code = gfxrom_bank_mapper(GFXTYPE_SCROLL3, code);
 
@@ -2516,7 +2545,7 @@ void cps_state::cps1_update_transmasks()
 {
 	for (int i = 0; i < 4; i++)
 	{
-		uint32_t mask;
+		int mask;
 
 		// Get transparency registers
 		if (m_game_config->priority[i] != -1)
@@ -2539,7 +2568,7 @@ void cps_state::video_start()
 	m_obj_size       = 0x0800;
 	m_other_size     = 0x0800;
 	m_palette_align  = 0x0400; // minimum alignment is a single palette page (512 colors). Verified on pcb.
-	m_palette_size   = CPS1_PALETTE_ENTRIES * 32; // Size of palette RAM
+	m_palette_size   = cps1_palette_entries * 32; // Size of palette RAM
 	m_stars_rom_size = 0x2000; // first 0x4000 of gfx ROM are used, but 0x0000-0x1fff is == 0x2000-0x3fff
 
 	// create tilemaps
@@ -2572,9 +2601,9 @@ void cps_state::video_start()
 		throw emu_fatalerror("cps_state::video_start: m_game_config hasn't been set up yet");
 
 	// Set up old base
-	m_scroll[0] = nullptr;
-	m_scroll[1] = nullptr;
-	m_scroll[2] = nullptr;
+	m_scroll1 = nullptr;
+	m_scroll2 = nullptr;
+	m_scroll3 = nullptr;
 	m_obj = nullptr;
 	m_other = nullptr;
 	cps1_get_video_base(); // Calculate base pointers
@@ -2587,18 +2616,22 @@ void cps_state::video_start()
 	save_pointer(NAME(m_buffered_obj), m_obj_size / 2);
 #if 0
 	// these do not need to be saved, because they are recovered from cps_a_regs in cps1_postload
-	save_item(NAME(m_scrollx));
-	save_item(NAME(m_scrolly));
-	save_item(NAME(m_starsx));
-	save_item(NAME(m_starsy));
+	save_item(NAME(m_scroll1x));
+	save_item(NAME(m_scroll1y));
+	save_item(NAME(m_scroll2x));
+	save_item(NAME(m_scroll2y));
+	save_item(NAME(m_scroll3x));
+	save_item(NAME(m_scroll3y));
+	save_item(NAME(m_stars1x));
+	save_item(NAME(m_stars1y));
+	save_item(NAME(m_stars2x));
+	save_item(NAME(m_stars2y));
 	save_item(NAME(m_stars_enabled));
 #endif
+
+	machine().save().register_postload(save_prepost_delegate(FUNC(cps_state::cps1_get_video_base), this));
 }
 
-void cps_state::device_post_load()
-{
-	cps1_get_video_base();
-}
 
 
 /***************************************************************************
@@ -2611,27 +2644,29 @@ void cps_state::device_post_load()
 
 void cps_state::cps1_build_palette(const uint16_t* const palette_base)
 {
-	uint16_t const *palette_ram = palette_base;
-	const uint16_t ctrl = m_cps_b_regs[m_game_config->palette_control/2];
+	int offset, page;
+	const uint16_t *palette_ram = palette_base;
+	int ctrl = m_cps_b_regs[m_game_config->palette_control/2];
 
 	// The palette is copied only for pages that are enabled in the ctrl
 	// register. Note that if the first palette pages are skipped, all
 	// the following pages are scaled down.
-	for (int page = 0; page < 6; ++page)
+	for (page = 0; page < 6; ++page)
 	{
 		if (BIT(ctrl, page))
 		{
-			for (int offset = 0; offset < 0x200; ++offset)
+			for (offset = 0; offset < 0x200; ++offset)
 			{
-				const uint16_t palette = *(palette_ram++);
+				int palette = *(palette_ram++);
+				int r, g, b, bright;
 
 				// from my understanding of the schematics, when the 'brightness'
 				// component is set to 0 it should reduce brightness to 1/3
-				const int bright = 0x0f + ((palette >> 12) << 1);
+				bright = 0x0f + ((palette >> 12) << 1);
 
-				const int r = ((palette >> 8) & 0x0f) * 0x11 * bright / 0x2d;
-				const int g = ((palette >> 4) & 0x0f) * 0x11 * bright / 0x2d;
-				const int b = ((palette >> 0) & 0x0f) * 0x11 * bright / 0x2d;
+				r = ((palette >> 8) & 0x0f) * 0x11 * bright / 0x2d;
+				g = ((palette >> 4) & 0x0f) * 0x11 * bright / 0x2d;
+				b = ((palette >> 0) & 0x0f) * 0x11 * bright / 0x2d;
 
 				m_palette->set_pen_color(0x200 * page + offset, rgb_t(r, g, b));
 			}
@@ -2691,8 +2726,8 @@ void cps_state::find_last_sprite() // Find the offset of last sprite
 		if (BIT(m_game_config->bootleg_kludge, 0, 4) == 3)
 		{
 			// captcommb - same end of sprite marker as CPS-2
-			const int marker = m_buffered_obj[offset + 1];
-			if (marker >= 0x8000)
+			int colour = m_buffered_obj[offset + 1];
+			if (colour >= 0x8000)
 			{
 				// Marker found. This is the last sprite.
 				m_last_sprite_offset = offset - 4;
@@ -2701,8 +2736,8 @@ void cps_state::find_last_sprite() // Find the offset of last sprite
 		}
 		else
 		{
-			const int marker = m_buffered_obj[offset + 3];
-			if ((marker & 0xff00) == 0xff00)
+			int colour = m_buffered_obj[offset + 3];
+			if ((colour & 0xff00) == 0xff00)
 			{
 				// Marker found. This is the last sprite.
 				m_last_sprite_offset = offset - 4;
@@ -2717,7 +2752,7 @@ void cps_state::find_last_sprite() // Find the offset of last sprite
 }
 
 
-void cps_state::cps1_render_sprites(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
+void cps_state::cps1_render_sprites( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect )
 {
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)                    \
 {                                                                   \
@@ -2726,19 +2761,19 @@ void cps_state::cps1_render_sprites(screen_device &screen, bitmap_ind16 &bitmap,
 				cliprect,                            \
 				CODE,                                               \
 				COLOR,                                              \
-				!(FLIPX), !(FLIPY),                                  \
-				512-16-(SX), 256-16-(SY), screen.priority(), 0x02, 15);                   \
+				!(FLIPX),!(FLIPY),                                  \
+				512-16-(SX),256-16-(SY),    screen.priority(),0x02,15);                   \
 	else                                                            \
 		m_gfxdecode->gfx(2)->prio_transpen(bitmap,\
 				cliprect,                            \
 				CODE,                                               \
 				COLOR,                                              \
-				FLIPX, FLIPY,                                        \
-				SX, SY, screen.priority(), 0x02,15);          \
+				FLIPX,FLIPY,                                        \
+				SX,SY, screen.priority(),0x02,15);          \
 }
 
 	int baseadd;
-	uint16_t const *base = m_buffered_obj.get();
+	uint16_t *base = m_buffered_obj.get();
 
 	// some sf2 hacks draw the sprites in reverse order
 	if (BIT(m_game_config->bootleg_kludge, 6))
@@ -2753,97 +2788,96 @@ void cps_state::cps1_render_sprites(screen_device &screen, bitmap_ind16 &bitmap,
 
 	for (int i = m_last_sprite_offset; i >= 0; i -= 4)
 	{
-		const int x = *(base + 0);
-		const int y = *(base + 1);
+		int x = *(base + 0);
+		int y = *(base + 1);
 		int code = *(base + 2);
-		const int colour = *(base + 3);
-		const int col = colour & 0x1f;
-		const bool flipx = BIT(colour, 5);
-		const bool flipy = BIT(colour, 6);
+		int colour = *(base + 3);
+		int col = colour & 0x1f;
 
 		code = gfxrom_bank_mapper(GFXTYPE_SPRITES, code);
 
 		if (code != -1)
 		{
-			if (colour & 0xff00)
+			if (colour & 0xff00 )
 			{
 				// handle blocked sprites
 				int nx = (colour & 0x0f00) >> 8;
 				int ny = (colour & 0xf000) >> 12;
+				int nxs, nys, sx, sy;
 				nx++;
 				ny++;
 
-				if (flipy)
+				if (colour & 0x40)
 				{
 					// Y flip
-					if (flipx)
+					if (colour & 0x20)
 					{
-						for (int nys = 0; nys < ny; nys++)
+						for (nys = 0; nys < ny; nys++)
 						{
-							const int sy = (y + nys * 16) & 0x1ff;
-							for (int nxs = 0; nxs < nx; nxs++)
+							for (nxs = 0; nxs < nx; nxs++)
 							{
-								const int sx = (x + nxs * 16) & 0x1ff;
+								sx = (x + nxs * 16) & 0x1ff;
+								sy = (y + nys * 16) & 0x1ff;
 
 								DRAWSPRITE(
 										(code & ~0xf) + ((code + (nx - 1) - nxs) & 0xf) + 0x10 * (ny - 1 - nys),
-										col,
-										1, 1,
-										sx, sy);
+										(col & 0x1f),
+										1,1,
+										sx,sy);
 							}
 						}
 					}
 					else
 					{
-						for (int nys = 0; nys < ny; nys++)
+						for (nys = 0; nys < ny; nys++)
 						{
-							const int sy = (y + nys * 16) & 0x1ff;
-							for (int nxs = 0; nxs < nx; nxs++)
+							for (nxs = 0; nxs < nx; nxs++)
 							{
-								const int sx = (x + nxs * 16) & 0x1ff;
+								sx = (x + nxs * 16) & 0x1ff;
+								sy = (y + nys * 16) & 0x1ff;
 
 								DRAWSPRITE(
 										(code & ~0xf) + ((code + nxs) & 0xf) + 0x10 * (ny - 1 - nys),
-										col,
-										0, 1,
-										sx, sy);
+										(col & 0x1f),
+										0,1,
+										sx,sy);
 							}
 						}
 					}
 				}
 				else
 				{
-					if (flipx)
+					if (colour & 0x20)
 					{
-						for (int nys = 0; nys < ny; nys++)
+						for (nys = 0; nys < ny; nys++)
 						{
-							const int sy = (y + nys * 16) & 0x1ff;
-							for (int nxs = 0; nxs<nx; nxs++)
+							for (nxs = 0; nxs<nx; nxs++)
 							{
-								const int sx = (x + nxs * 16) & 0x1ff;
+								sx = (x + nxs * 16) & 0x1ff;
+								sy = (y + nys * 16) & 0x1ff;
 
 								DRAWSPRITE(
 										(code & ~0xf) + ((code + (nx - 1) - nxs) & 0xf) + 0x10 * nys,
-										col,
-										1, 0,
-										sx, sy);
+										(col & 0x1f),
+										1,0,
+										sx,sy);
 							}
 						}
 					}
 					else
 					{
-						for (int nys = 0; nys < ny; nys++)
+						for (nys = 0; nys < ny; nys++)
 						{
-							const int sy = (y + nys * 16) & 0x1ff;
-							for (int nxs = 0; nxs < nx; nxs++)
+							for (nxs = 0; nxs < nx; nxs++)
 							{
-								const int sx = (x + nxs * 16) & 0x1ff;
+								sx = (x + nxs * 16) & 0x1ff;
+								sy = (y + nys * 16) & 0x1ff;
 
 								DRAWSPRITE(
 										(code & ~0xf) + ((code + nxs) & 0xf) + 0x10 * nys,
-										col,
-										0, 0,
-										sx, sy);
+										(col & 0x1f),
+										0,0,
+										sx,sy);
 							}
 						}
 					}
@@ -2854,9 +2888,9 @@ void cps_state::cps1_render_sprites(screen_device &screen, bitmap_ind16 &bitmap,
 				// Simple case... 1 sprite
 				DRAWSPRITE(
 						code,
-						col,
-						flipx, flipy,
-						x & 0x1ff, y & 0x1ff);
+						(col & 0x1f),
+						colour&0x20,colour&0x40,
+						x & 0x1ff,y & 0x1ff);
 			}
 		}
 		base += baseadd;
@@ -2866,7 +2900,7 @@ void cps_state::cps1_render_sprites(screen_device &screen, bitmap_ind16 &bitmap,
 
 
 
-void cps_state::cps1_render_stars(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
+void cps_state::cps1_render_stars( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect )
 {
 	uint8_t const *const stars_rom = m_region_stars->base();
 
@@ -2885,15 +2919,15 @@ void cps_state::cps1_render_stars(screen_device &screen, bitmap_ind16 &bitmap, c
 			{
 				int sx = (offs / 256) * 32;
 				int sy = (offs % 256);
-				sx = (sx - m_starsx[1] + (col & 0x1f)) & 0x1ff;
-				sy = (sy - m_starsy[1]) & 0xff;
+				sx = (sx - m_stars2x + (col & 0x1f)) & 0x1ff;
+				sy = (sy - m_stars2y) & 0xff;
 				if (flip_screen())
 				{
 					sx = 512 - sx;
 					sy = 256 - sy;
 				}
 
-				const int cnt = (screen.frame_number() / 16) % (BIT(col, 7) ? 15 : 16);
+				int cnt = (screen.frame_number() / 16) % ((col & 0x80) ? 15 : 16);
 				col = ((col & 0xe0) >> 1) + cnt;
 
 				if (cliprect.contains(sx, sy))
@@ -2906,20 +2940,20 @@ void cps_state::cps1_render_stars(screen_device &screen, bitmap_ind16 &bitmap, c
 	{
 		for (int offs = 0; offs < m_stars_rom_size / 2; offs++)
 		{
-			int col = stars_rom[8 * offs];
+			int col = stars_rom[8*offs];
 			if ((col & 0x1f) != 0x0f)
 			{
 				int sx = (offs / 256) * 32;
 				int sy = (offs % 256);
-				sx = (sx - m_starsx[0] + (col & 0x1f)) & 0x1ff;
-				sy = (sy - m_starsy[0]) & 0xff;
+				sx = (sx - m_stars1x + (col & 0x1f)) & 0x1ff;
+				sy = (sy - m_stars1y) & 0xff;
 				if (flip_screen())
 				{
 					sx = 512 - sx;
 					sy = 256 - sy;
 				}
 
-				const int cnt = (screen.frame_number() / 16) % (BIT(col, 7) ? 15 : 16);
+				int cnt = (screen.frame_number() / 16) % ((col & 0x80) ? 15 : 16);
 				col = ((col & 0xe0) >> 1) + cnt;
 
 				if (cliprect.contains(sx, sy))
@@ -2930,7 +2964,7 @@ void cps_state::cps1_render_stars(screen_device &screen, bitmap_ind16 &bitmap, c
 }
 
 
-void cps_state::cps1_render_layer(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int layer, int primask)
+void cps_state::cps1_render_layer( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int layer, int primask )
 {
 	switch (layer)
 	{
@@ -2945,7 +2979,7 @@ void cps_state::cps1_render_layer(screen_device &screen, bitmap_ind16 &bitmap, c
 	}
 }
 
-void cps_state::cps1_render_high_layer(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int layer)
+void cps_state::cps1_render_high_layer( screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect, int layer )
 {
 	switch (layer)
 	{
@@ -2970,11 +3004,11 @@ void cps_state::cps1_render_high_layer(screen_device &screen, bitmap_ind16 &bitm
 void cps_state::render_layers(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
 {
 	// Draw layers (0 = sprites, 1-3 = tilemaps)
-	const uint16_t layercontrol = m_cps_b_regs[m_game_config->layer_control / 2];
-	const uint16_t l0 = (layercontrol >> 0x06) & 0x03;
-	const uint16_t l1 = (layercontrol >> 0x08) & 0x03;
-	const uint16_t l2 = (layercontrol >> 0x0a) & 0x03;
-	const uint16_t l3 = (layercontrol >> 0x0c) & 0x03;
+	int layercontrol = m_cps_b_regs[m_game_config->layer_control / 2];
+	int l0 = (layercontrol >> 0x06) & 0x03;
+	int l1 = (layercontrol >> 0x08) & 0x03;
+	int l2 = (layercontrol >> 0x0a) & 0x03;
+	int l3 = (layercontrol >> 0x0c) & 0x03;
 	screen.priority().fill(0, cliprect);
 
 	if (BIT(m_game_config->bootleg_kludge, 7))
@@ -3000,9 +3034,9 @@ void cps_state::render_layers(screen_device &screen, bitmap_ind16 &bitmap, const
 
 uint32_t cps_state::screen_update_cps1(screen_device &screen, bitmap_ind16 &bitmap, const rectangle &cliprect)
 {
-	const uint16_t videocontrol = m_cps_a_regs[CPS1_VIDEOCONTROL];
+	int videocontrol = m_cps_a_regs[CPS1_VIDEOCONTROL];
 
-	flip_screen_set(BIT(videocontrol, 15));
+	flip_screen_set(videocontrol & 0x8000);
 
 	// Get video memory base registers
 	cps1_get_video_base();
@@ -3012,28 +3046,28 @@ uint32_t cps_state::screen_update_cps1(screen_device &screen, bitmap_ind16 &bitm
 
 	cps1_update_transmasks();
 
-	m_bg_tilemap[0]->set_scrollx(0, m_scrollx[0]);
-	m_bg_tilemap[0]->set_scrolly(0, m_scrolly[0]);
+	m_bg_tilemap[0]->set_scrollx(0, m_scroll1x);
+	m_bg_tilemap[0]->set_scrolly(0, m_scroll1y);
 
-	if (BIT(videocontrol, 0)) // linescroll enable
+	if (videocontrol & 0x01) // linescroll enable
 	{
-		const int scrly = -m_scrolly[1];
+		int scrly = -m_scroll2y;
 
 		m_bg_tilemap[1]->set_scroll_rows(1024);
 
-		const int otheroffs = m_cps_a_regs[CPS1_ROWSCROLL_OFFS];
+		int otheroffs = m_cps_a_regs[CPS1_ROWSCROLL_OFFS];
 
 		for (int i = 0; i < 256; i++)
-			m_bg_tilemap[1]->set_scrollx((i - scrly) & 0x3ff, m_scrollx[1] + m_other[(i + otheroffs) & 0x3ff]);
+			m_bg_tilemap[1]->set_scrollx((i - scrly) & 0x3ff, m_scroll2x + m_other[(i + otheroffs) & 0x3ff]);
 	}
 	else
 	{
 		m_bg_tilemap[1]->set_scroll_rows(1);
-		m_bg_tilemap[1]->set_scrollx(0, m_scrollx[1]);
+		m_bg_tilemap[1]->set_scrollx(0, m_scroll2x);
 	}
-	m_bg_tilemap[1]->set_scrolly(0, m_scrolly[1]);
-	m_bg_tilemap[2]->set_scrollx(0, m_scrollx[2]);
-	m_bg_tilemap[2]->set_scrolly(0, m_scrolly[2]);
+	m_bg_tilemap[1]->set_scrolly(0, m_scroll2y);
+	m_bg_tilemap[2]->set_scrollx(0, m_scroll3x);
+	m_bg_tilemap[2]->set_scrolly(0, m_scroll3y);
 
 	// Games use pen 0xbff as background color; this is used in 3wonders,
 	// mtwins (explosion during attract), mercs (intermission).

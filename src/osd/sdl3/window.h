@@ -118,6 +118,8 @@ private:
 	// Original display_mode
 	SDL_DisplayMode     m_original_mode;
 
+	int                 m_extra_flags;
+
 	// monitor info
 	bool                m_mouse_captured;
 	bool                m_mouse_hidden;

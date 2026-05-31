@@ -43,6 +43,7 @@
 
 #include "nl_jpmsru.h"
 
+#include "awpvid.h"
 #include "fruitsamples.h"
 
 #include "cpu/tms9900/tms9980a.h"
@@ -442,7 +443,8 @@ void jpmsru_state::reel_w(offs_t offset, uint8_t data)
 	if(bit == 3)
 	{
 		m_reel[reel]->update(m_reelbits[reel]);
-		m_reel[reel]->draw();
+		const char reelnames[4][6] = { "reel1", "reel2", "reel3", "reel4" };
+		awp_draw_reel(machine(), reelnames[reel], *m_reel[reel]);
 	}
 }
 
@@ -1331,7 +1333,8 @@ void jpmsru_state::machine_start()
 
 void jpmsru_state::device_post_load()
 {
-	for(int i = 0; i < 3; i++) m_reel[i]->draw();
+	const char reelnames[4][6] = { "reel1", "reel2", "reel3", "reel4" };
+	for(int i = 0; i < 3; i++) awp_draw_reel(machine(), reelnames[i], *m_reel[i]);
 }
 
 // Base SRU with 3K ROM card

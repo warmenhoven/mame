@@ -51,6 +51,12 @@ if (_OPTIONS["targetos"] == "windows") then
 	}
 end
 
+if (_OPTIONS["osd"] == "sdl") then
+	defines {
+		"UI_SDL",
+	}
+end
+
 files {
 	MAME_DIR .. "src/frontend/mame/audit.cpp",
 	MAME_DIR .. "src/frontend/mame/audit.h",

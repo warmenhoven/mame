@@ -19,8 +19,8 @@
 
 namespace ui {
 
-menu_sliders::menu_sliders(mame_ui_manager &mui, render_target &target, bool menuless_mode)
-	: menu(mui, target)
+menu_sliders::menu_sliders(mame_ui_manager &mui, render_container &container, bool menuless_mode)
+	: menu(mui, container)
 	, m_menuless_mode(menuless_mode)
 	, m_hidden(menuless_mode)
 {
@@ -200,8 +200,6 @@ void menu_sliders::populate()
 					flags |= FLAG_LEFT_ARROW;
 				if (curval < slider->maxval)
 					flags |= FLAG_RIGHT_ARROW;
-				if (curval == slider->defval)
-					flags |= FLAG_DEEMPHASIZE;
 				item_append(slider->description, tempstring, flags, (void *)slider, menu_item_type::SLIDER);
 			}
 		}
@@ -227,8 +225,6 @@ void menu_sliders::populate()
 				flags |= FLAG_LEFT_ARROW;
 			if (curval < slider->maxval)
 				flags |= FLAG_RIGHT_ARROW;
-			if (curval == slider->defval)
-				flags |= FLAG_DEEMPHASIZE;
 			item_append(slider->description, tempstring, flags, (void *)slider, menu_item_type::SLIDER);
 		}
 		else
@@ -301,7 +297,7 @@ void menu_sliders::custom_render(uint32_t flags, void *selectedref, float top, f
 
 		// determine the text height
 		ui().draw_text_full(
-				target(),
+				container(),
 				tempstring,
 				0, 0, x2 - x1 - 2.0f * lr_border(),
 				text_layout::text_justify::CENTER, text_layout::word_wrapping::TRUNCATE,

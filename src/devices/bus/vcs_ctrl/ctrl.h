@@ -58,7 +58,10 @@ public:
 	vcs_control_port_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, char const* dflt)
 		: vcs_control_port_device(mconfig, tag, owner)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	vcs_control_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock = 0);
 
@@ -91,7 +94,7 @@ public:
 	void trigger_w(int state) { m_write_trigger(state); }
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	device_vcs_control_port_interface *m_device;
@@ -106,7 +109,7 @@ inline void device_vcs_control_port_interface::trigger_w(int state)
 }
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(VCS_CONTROL_PORT, vcs_control_port_device)
 
 void vcs_control_port_devices(device_slot_interface &device);

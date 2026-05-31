@@ -53,6 +53,7 @@ enum : unsigned {
 	BOOKKEEPING,
 	GAME_INFO,
 	WARN_INFO,
+	IMAGE_MENU_IMAGE_INFO,
 	IMAGE_MENU_FILE_MANAGER,
 	TAPE_CONTROL,
 	SLOT_DEVICES,
@@ -83,8 +84,8 @@ enum : unsigned {
     menu_main constructor/destructor
 -------------------------------------------------*/
 
-menu_main::menu_main(mame_ui_manager &mui, render_target &target)
-	: menu(mui, target)
+menu_main::menu_main(mame_ui_manager &mui, render_container &container)
+	: menu(mui, container)
 	, m_phase(machine_phase::PREINIT)
 {
 	set_needs_prev_menu_item(false);
@@ -129,13 +130,18 @@ void menu_main::populate()
 		item_append(_("menu-main", "Warning Information"), 0, (void *)WARN_INFO);
 
 	for (device_image_interface &image : image_interface_enumerator(machine().root_device()))
-	{
-		if (image.user_loadable() || image.has_preset_images_selection())
+		if (image.user_loadable())
 		{
-			item_append(_("menu-main", "Media Control"), 0, (void *)IMAGE_MENU_FILE_MANAGER);
+			item_append(_("menu-main", "Media Image Information"), 0, (void *)IMAGE_MENU_IMAGE_INFO);
 			break;
 		}
-	}
+
+	for (device_image_interface &image : image_interface_enumerator(machine().root_device()))
+		if (image.user_loadable() || image.has_preset_images_selection())
+		{
+			item_append(_("menu-main", "File Manager"), 0, (void *)IMAGE_MENU_FILE_MANAGER);
+			break;
+		}
 
 	if (cassette_device_enumerator(machine().root_device()).first() != nullptr)
 		item_append(_("menu-main", "Tape Control"), 0, (void *)TAPE_CONTROL);
@@ -222,98 +228,102 @@ bool menu_main::handle(event const *ev)
 		switch (uintptr_t(ev->itemref))
 		{
 		case INPUT_OPTIONS:
-			menu::stack_push<menu_input_options>(ui(), target());
+			menu::stack_push<menu_input_options>(ui(), container());
 			break;
 
 		case SETTINGS_DIP_SWITCHES:
-			menu::stack_push<menu_settings_dip_switches>(ui(), target());
+			menu::stack_push<menu_settings_dip_switches>(ui(), container());
 			break;
 
 		case SETTINGS_DRIVER_CONFIG:
-			menu::stack_push<menu_settings_machine_config>(ui(), target());
+			menu::stack_push<menu_settings_machine_config>(ui(), container());
 			break;
 
 		case BOOKKEEPING:
-			menu::stack_push<menu_bookkeeping>(ui(), target());
+			menu::stack_push<menu_bookkeeping>(ui(), container());
 			break;
 
 		case GAME_INFO:
-			menu::stack_push<menu_game_info>(ui(), target());
+			menu::stack_push<menu_game_info>(ui(), container());
 			break;
 
 		case WARN_INFO:
-			menu::stack_push<menu_warn_info>(ui(), target());
+			menu::stack_push<menu_warn_info>(ui(), container());
+			break;
+
+		case IMAGE_MENU_IMAGE_INFO:
+			menu::stack_push<menu_image_info>(ui(), container());
 			break;
 
 		case IMAGE_MENU_FILE_MANAGER:
-			menu::stack_push<menu_file_manager>(ui(), target(), std::string());
+			menu::stack_push<menu_file_manager>(ui(), container(), std::string());
 			break;
 
 		case TAPE_CONTROL:
-			menu::stack_push<menu_tape_control>(ui(), target(), nullptr);
+			menu::stack_push<menu_tape_control>(ui(), container(), nullptr);
 			break;
 
 		case PTY_INFO:
-			menu::stack_push<menu_pty_info>(ui(), target());
+			menu::stack_push<menu_pty_info>(ui(), container());
 			break;
 
 		case SLOT_DEVICES:
-			menu::stack_push<menu_slot_devices>(ui(), target());
+			menu::stack_push<menu_slot_devices>(ui(), container());
 			break;
 
 		case NETWORK_DEVICES:
-			menu::stack_push<menu_network_devices>(ui(), target());
+			menu::stack_push<menu_network_devices>(ui(), container());
 			break;
 
 		case AUDIO_MIXER:
-			menu::stack_push<menu_audio_mixer>(ui(), target());
+			menu::stack_push<menu_audio_mixer>(ui(), container());
 			break;
 
 		case AUDIO_EFFECTS:
-			menu::stack_push<menu_audio_effects>(ui(), target());
+			menu::stack_push<menu_audio_effects>(ui(), container());
 			break;
 
 		case SLIDERS:
-			menu::stack_push<menu_sliders>(ui(), target(), false);
+			menu::stack_push<menu_sliders>(ui(), container(), false);
 			break;
 
 		case VIDEO_TARGETS:
-			menu::stack_push<menu_video_targets>(ui(), target());
+			menu::stack_push<menu_video_targets>(ui(), container());
 			break;
 
 		case CROSSHAIR:
-			menu::stack_push<menu_crosshair>(ui(), target());
+			menu::stack_push<menu_crosshair>(ui(), container());
 			break;
 
 		case CHEAT:
-			menu::stack_push<menu_cheat>(ui(), target());
+			menu::stack_push<menu_cheat>(ui(), container());
 			break;
 
 		case PLUGINS:
-			menu::stack_push<menu_plugin>(ui(), target());
+			menu::stack_push<menu_plugin>(ui(), container());
 			break;
 
 		case SELECT_GAME:
 			if (machine().options().ui() == emu_options::UI_SIMPLE)
-				menu::stack_push<simple_menu_select_game>(ui(), target(), nullptr);
+				menu::stack_push<simple_menu_select_game>(ui(), container(), nullptr);
 			else
-				menu::stack_push<menu_select_game>(ui(), target(), nullptr);
+				menu::stack_push<menu_select_game>(ui(), container(), nullptr);
 			break;
 
 		case ABOUT:
-			menu::stack_push<menu_about>(ui(), target());
+			menu::stack_push<menu_about>(ui(), container());
 			break;
 
 		case BIOS_SELECTION:
-			menu::stack_push<menu_bios_selection>(ui(), target());
+			menu::stack_push<menu_bios_selection>(ui(), container());
 			break;
 
 		case BARCODE_READ:
-			menu::stack_push<menu_barcode_reader>(ui(), target(), nullptr);
+			menu::stack_push<menu_barcode_reader>(ui(), container(), nullptr);
 			break;
 
 		case EXTERNAL_DATS:
-			menu::stack_push<menu_dats_view>(ui(), target());
+			menu::stack_push<menu_dats_view>(ui(), container());
 			break;
 
 		case FAVORITE:

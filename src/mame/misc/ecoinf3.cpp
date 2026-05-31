@@ -14,6 +14,7 @@
 
 #include "emu.h"
 
+#include "awpvid.h" // drawing reels
 
 #include "cpu/z180/z180.h"
 #include "machine/i8255.h"
@@ -230,8 +231,8 @@ private:
 		m_reels[0]->update( data    &0x0f);
 		m_reels[1]->update((data>>4)&0x0f);
 
-		m_reels[0]->draw();
-		m_reels[1]->draw();
+		awp_draw_reel(machine(),"reel1", *m_reels[0]);
+		awp_draw_reel(machine(),"reel2", *m_reels[1]);
 	}
 
 	void ppi8255_intf_d_write_b_reel23(uint8_t data)
@@ -241,8 +242,8 @@ private:
 		m_reels[2]->update( data    &0x0f);
 		m_reels[3]->update((data>>4)&0x0f);
 
-		m_reels[2]->draw();
-		m_reels[3]->draw();
+		awp_draw_reel(machine(),"reel3", *m_reels[2]);
+		awp_draw_reel(machine(),"reel4", *m_reels[3]);
 	}
 
 	void ppi8255_intf_d_write_c(uint8_t data) { logerror("%04x - ppi8255_intf_d_(used)write_c %02x\n", m_maincpu->pcbase(), data);}

@@ -4,11 +4,7 @@
 
     Namco 163 internal sound emulation by cam900
     4 bit wavetable (variable length), 1 ~ 8 channel
-    Reference : https://www.nesdev.org/wiki/Namco_163_audio
-
-    TODO:
-    - Internal RAM can be battery-backed
-      See https://www.nesdev.org/wiki/INES_Mapper_019 for details
+    Reference : https://wiki.nesdev.com/w/index.php/Namco_163_audio
 
 ***************************************************************************/
 

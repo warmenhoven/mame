@@ -33,7 +33,10 @@ public:
 	mc10cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock, T &&opts, const char *dflt)
 		: mc10cart_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	mc10cart_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock);
@@ -70,7 +73,7 @@ private:
 	device_mc10cart_interface *m_cart;
 };
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(MC10CART_SLOT, mc10cart_slot_device)
 
 class device_mc10cart_interface : public device_interface

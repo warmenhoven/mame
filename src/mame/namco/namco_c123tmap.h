@@ -12,8 +12,6 @@
 class namco_c123tmap_device : public device_t, public device_gfx_interface
 {
 public:
-	using c123_tilemap_delegate = device_delegate<void(uint16_t, int&, int&)>;
-
 	// construction/destruction
 	namco_c123tmap_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock = 0);
 
@@ -25,7 +23,8 @@ public:
 	}
 	void set_tmap3_half_height() { m_tmap3_half_height = true; }
 
-	template <typename... T> void set_tile_callback(T &&... args) { m_tilemapinfo.cb.set(std::forward<T>(args)...); }
+	typedef delegate<void(uint16_t, int&, int&)> c123_tilemap_delegate;
+	void set_tile_callback(c123_tilemap_delegate tilemap_cb) { m_tilemapinfo.cb = tilemap_cb; }
 
 	// 16 bit handlers
 	void videoram16_w(offs_t offset, uint16_t data, uint16_t mem_mask = ~0);
@@ -53,11 +52,6 @@ private:
 
 	struct info
 	{
-		info(namco_c123tmap_device &owner)
-			: cb(owner)
-		{
-		}
-
 		uint16_t control[0x40 / 2];
 		/**
 		 * [0x1] 0x02/2 tilemap#0.scrollx

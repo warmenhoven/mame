@@ -93,8 +93,6 @@ protected:
 
 	virtual int transfer_size(int const channel) const { return 1; }
 
-	virtual void soft_reset();
-
 	int m_icount;
 	uint32_t m_address_mask;
 

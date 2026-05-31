@@ -36,7 +36,6 @@ vtech_memexp_slot_device::vtech_memexp_slot_device(const machine_config &mconfig
 	m_nmi_handler(*this),
 	m_reset_handler(*this)
 {
-	set_options(vtech_memexp_carts, nullptr, false);
 }
 
 //-------------------------------------------------

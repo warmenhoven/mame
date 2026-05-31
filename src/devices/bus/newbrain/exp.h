@@ -59,7 +59,10 @@ public:
 	newbrain_expansion_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, uint32_t clock, T &&opts, char const *dflt)
 		: newbrain_expansion_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	newbrain_expansion_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -72,7 +75,7 @@ public:
 	void iorq_w(offs_t offset, uint8_t data, bool &prtov);
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
 
@@ -102,10 +105,12 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(NEWBRAIN_EXPANSION_SLOT, newbrain_expansion_slot_device)
 
 
 void newbrain_expansion_cards(device_slot_interface &device);
+
+
 
 #endif // MAME_BUS_NEWBRAIN_EXP_H

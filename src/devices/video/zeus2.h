@@ -154,9 +154,8 @@ public:
 	int texel_width;
 	float zbase;
 
-	enum system_t { THEGRID, CRUSNEXO, MWSKINS };
-	void set_system_type(system_t type) { m_system = type; }
-	system_t m_system;
+	enum { THEGRID, CRUSNEXO, MWSKINS };
+	int m_system;
 #if PRINT_TEX_INFO
 	void check_tex(uint32_t &texmode, float &zObj, float &zMat, float &zOff);
 	std::string tex_info(void);

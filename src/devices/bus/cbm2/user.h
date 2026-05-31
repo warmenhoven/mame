@@ -75,7 +75,10 @@ public:
 	cbm2_user_port_device(const machine_config &mconfig, const char *tag, device_t *owner, T &&opts, const char *dflt)
 		: cbm2_user_port_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 	cbm2_user_port_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
@@ -104,7 +107,7 @@ public:
 	void flag_w(int state) { m_write_flag(state); }
 
 protected:
-	// device_t implementation
+	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 
 	devcb_write_line   m_write_irq;
@@ -116,7 +119,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(CBM2_USER_PORT, cbm2_user_port_device)
 
 

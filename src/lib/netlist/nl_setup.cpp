@@ -93,6 +93,21 @@ namespace netlist
 	}
 
 	void
+	nlparse_t::register_dev(const pstring &                     classname,
+							std::initializer_list<const char *> more_parameters)
+	{
+		std::vector<pstring> params;
+		const auto *         i(more_parameters.begin());
+		pstring              name(*i);
+		++i;
+		for (; i != more_parameters.end(); ++i)
+		{
+			params.emplace_back(*i);
+		}
+		register_dev(classname, name, params);
+	}
+
+	void
 	nlparse_t::register_dev(const pstring &classname, const pstring &name,
 							const std::vector<pstring> &params_and_connections,
 							factory::element_t **       factory_element)

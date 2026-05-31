@@ -340,11 +340,17 @@ void pdp1_state::pdp1_draw_panel(bitmap_ind16 &bitmap)
 
 
 
-constexpr int typewriter_line_height = 8;
-constexpr int typewriter_write_offset_y = typewriter_window_height-typewriter_line_height;
-constexpr int typewriter_scroll_step = typewriter_line_height;
+enum
+{
+	typewriter_line_height = 8,
+	typewriter_write_offset_y = typewriter_window_height-typewriter_line_height,
+	typewriter_scroll_step = typewriter_line_height
+};
 
-constexpr int tab_step = 8;
+enum
+{
+	tab_step = 8
+};
 
 
 void pdp1_typewriter_device::linefeed()

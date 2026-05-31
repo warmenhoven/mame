@@ -667,11 +667,9 @@ void mcd212_device::mix_lines(uint32_t *plane_a, bool *transparent_a, uint32_t *
 		mosaic_count_b >>= 1;
 
 	// If PAL and 'Standard' bit set, insert a 24px border on the left/right
-	if (border_width)
-	{
-		std::fill_n(out, border_width, s_4bpp_color[0]);
-		out += border_width;
-	}
+	uint32_t offset = (!BIT(m_dcr[0], DCR_CF_BIT) || BIT(m_csrw[0], CSR1W_ST_BIT)) ? 24 : 0;
+	std::fill_n(out, offset, s_4bpp_color[0]);
+	out += offset;
 
 	for (int x = 0; x < width; x++)
 	{
@@ -745,7 +743,7 @@ void mcd212_device::draw_cursor(uint32_t *scanline)
 
 	const uint16_t cursor_x = m_cursor_position & 0x3ff;
 	const uint16_t cursor_y = ((m_cursor_position >> 12) & 0x3ff) + m_ica_height;
-	const int32_t y = screen().vpos() / 2 - cursor_y;
+	const int32_t y = screen().vpos() - cursor_y;
 	const int width = get_screen_width();
 
 	if ((0 <= y) && (y < 16))
@@ -956,11 +954,11 @@ TIMER_CALLBACK_MEMBER(mcd212_device::dca_tick)
 	if (BIT(m_dcr[1], DCR_DCA_BIT))
 		process_dca<1>();
 
-	int scanline = screen().vpos() / 2;
+	int scanline = screen().vpos();
 	if (scanline == m_total_height - 1)
-		m_dca_timer->adjust(screen().time_until_pos(m_ica_height * 2, 784));
+		m_dca_timer->adjust(screen().time_until_pos(m_ica_height, 784));
 	else
-		m_dca_timer->adjust(screen().time_until_pos((scanline + 1) * 2, 784));
+		m_dca_timer->adjust(screen().time_until_pos(scanline + 1, 784));
 }
 
 uint32_t mcd212_device::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
@@ -970,18 +968,20 @@ uint32_t mcd212_device::screen_update(screen_device &screen, bitmap_rgb32 &bitma
 	bool transparent_a[768];
 	bool transparent_b[768];
 
-	// It updates 2 bitmap lines each time
-	if (screen.vpos() & 1)
-		return 0;
+	if (screen.vpos() >= m_total_height)
+	{
+		return 0; // Do nothing on the extended rows.
+	}
 
 	// FIXME this should use the clipping rectangle to determine which lines need drawing
-	int scanline = screen.vpos() / 2;
+	int scanline = screen.vpos();
 
 	// Process VSR and mix if we're in the visible region
 	if (scanline >= m_ica_height)
 	{
-		uint32_t *const out = &bitmap.pix(scanline * 2 + BIT(~m_csrr[0], CSR1R_PA_BIT));
-		uint32_t *const out2 = &bitmap.pix(scanline * 2 + BIT(m_csrr[0], CSR1R_PA_BIT));
+		uint32_t const bitmap_line = ((scanline - m_ica_height) << 1) + m_ica_height;
+		uint32_t *const out = &bitmap.pix(bitmap_line + BIT(~m_csrr[0], CSR1R_PA_BIT));
+		uint32_t *const out2 = &bitmap.pix(bitmap_line + BIT(m_csrr[0], CSR1R_PA_BIT));
 
 		bool draw_line = true;
 		if (!BIT(m_dcr[0], DCR_FD_BIT) && BIT(m_csrw[0], CSR1W_ST_BIT))
@@ -998,6 +998,7 @@ uint32_t mcd212_device::screen_update(screen_device &screen, bitmap_rgb32 &bitma
 
 		if (draw_line)
 		{
+
 			process_vsr<0>(plane_a, transparent_a);
 			process_vsr<1>(plane_b, transparent_b);
 
@@ -1074,7 +1075,7 @@ int mcd212_device::ram_dtack_cycle_count()
 		return 2;
 
 	const int x = screen().hpos();
-	const int y = screen().vpos() / 2;
+	const int y = screen().vpos();
 	const bool x_outside_active_display = (x >= 408);
 
 	// No contending for Ch.1/Ch.2 timing slots during the final 8-pixel area on all lines
@@ -1143,8 +1144,8 @@ void mcd212_device::device_reset()
 
 	m_int_callback(CLEAR_LINE);
 
-	m_dca_timer->adjust(screen().time_until_pos(m_ica_height * 2, 784));
-	m_ica_timer->adjust(screen().time_until_pos(m_ica_height * 2, 0));
+	m_dca_timer->adjust(screen().time_until_pos(m_ica_height, 784));
+	m_ica_timer->adjust(screen().time_until_pos(m_ica_height, 0));
 }
 
 //-------------------------------------------------

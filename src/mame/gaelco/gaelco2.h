@@ -41,7 +41,6 @@ public:
 	void saltcrdi(machine_config &config) ATTR_COLD;
 
 	void init_alighunt() ATTR_COLD;
-	void init_luckyclrs() ATTR_COLD;
 	void init_play2000() ATTR_COLD;
 
 protected:

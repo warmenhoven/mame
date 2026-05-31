@@ -6,6 +6,7 @@
 
     H8 Serial Communications Interface
 
+
 ***************************************************************************/
 
 #ifndef MAME_CPU_H8_H8_SCI_H

@@ -20,7 +20,7 @@ namespace ui {
 class menu_cheat : public menu
 {
 public:
-	menu_cheat(mame_ui_manager &mui, render_target &target);
+	menu_cheat(mame_ui_manager &mui, render_container &container);
 	virtual ~menu_cheat() override;
 
 private:

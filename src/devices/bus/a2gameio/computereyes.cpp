@@ -92,18 +92,14 @@ int apple2_compeyes_device::sw1_r()
 	int res = m_a2_bitmap[(m_y*280)+m_x] > m_level ? 1 : 0;
 //  if (m_a2_bitmap[(m_y*280)+m_x] != 0)
 //      printf("Read pixel at (%d, %d) = %d (pix %d, level %d)\n", m_x, m_y, res, m_a2_bitmap[(m_y*280)+m_x], m_level);
-
-	if (!machine().side_effects_disabled())
+	m_y++;
+	if (m_y >= 192)
 	{
-		m_y++;
-		if (m_y >= 192)
+		if (m_x < 279)
 		{
-			if (m_x < 279)
-			{
-				m_x++;
-			}
-			m_y = 0;
+			m_x++;
 		}
+		m_y = 0;
 	}
 	return res;
 }

@@ -22,6 +22,7 @@ public:
 
 	// reading and writing
 	virtual uint8_t read() = 0;
+	virtual void dir_w(int state) = 0;
 	virtual void write(uint8_t data) = 0;
 	virtual void set_ready() = 0;
 
@@ -62,6 +63,11 @@ public:
 	uint8_t read()
 	{
 		return m_cart->read();
+	}
+
+	void dir_w(int state)
+	{
+		m_cart->dir_w(state);
 	}
 
 	void set_ready()

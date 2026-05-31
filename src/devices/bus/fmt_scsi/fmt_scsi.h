@@ -31,7 +31,10 @@ public:
 	fmt_scsi_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, T &&opts, char const *dflt)
 		: fmt_scsi_slot_device(mconfig, tag, owner, 0)
 	{
-		set_options(std::forward<T>(opts), dflt, false);
+		option_reset();
+		opts(*this);
+		set_default_option(dflt);
+		set_fixed(false);
 	}
 
 	fmt_scsi_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, u32 clock = 0);
@@ -87,7 +90,7 @@ private:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(FMT_SCSI_SLOT, fmt_scsi_slot_device)
 
 void fmt_scsi_default_devices(device_slot_interface &device);

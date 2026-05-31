@@ -56,9 +56,7 @@ private:
 		CONTROL_INIT = 4,
 		CONTROL_SELECT = 8,
 		CONTROL_IRQ_ENABLED = 16,
-		// SPP in PS/2 bidirectional mode and ECP adds these two extra control bits
-		CONTROL_OUTPUT_ENABLED = 32,
-		CONTROL_AUTO_STROBE = 128
+		CONTROL_OUTPUT_ENABLED = 32
 	};
 
 	enum

@@ -679,8 +679,7 @@ public:
 	// UI targets
 	render_target &ui_target() const { assert(m_ui_target != nullptr); return *m_ui_target; }
 	void set_ui_target(render_target &target) { m_ui_target = &target; }
-	float ui_aspect(render_target &target);     // gets result for target's UI container - target must not be a hidden target with no UI container
-	float ui_aspect(render_container &rc);      // rc must be a screen container or a UI container for a render target; requires an O(n) scan of render targets
+	float ui_aspect(render_container *rc = nullptr);
 
 	// UI containers
 	render_container &ui_container() const { assert(ui_target().ui_container()); return *ui_target().ui_container(); }

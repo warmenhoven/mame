@@ -1012,9 +1012,10 @@ void hnayayoi_state::hnfubuki(machine_config &config)
 {
 	hnayayoi(config);
 	m_maincpu->set_addrmap(AS_PROGRAM, &hnayayoi_state::hnfubuki_map);
-	m_maincpu->remove_addrmap(AS_IO);
+	m_maincpu->set_addrmap(AS_IO, address_map_constructor());
 
-	m_mainlatch->q_out_cb<4>().set(FUNC(hnayayoi_state::nmi_enable_w)); // D5
+	// D5
+	m_mainlatch->q_out_cb<4>().set(FUNC(hnayayoi_state::nmi_enable_w));
 }
 
 void untoucha_state::untoucha(machine_config &config)

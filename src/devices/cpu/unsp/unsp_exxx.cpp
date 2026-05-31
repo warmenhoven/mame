@@ -10,7 +10,7 @@
 #define LOG_UNSP_MULS            (1U << 1)
 #define LOG_UNSP_SHIFTS          (1U << 2)
 
-#define VERBOSE             (0)
+#define VERBOSE             (LOG_UNSP_SHIFTS)
 
 #include "logmacro.h"
 

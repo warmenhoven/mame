@@ -3,7 +3,7 @@
 // thanks-to:Berger
 /*******************************************************************************
 
-Saitek OSA: Kasparov Maestro/Analyst Module (1987-1990)
+Saitek OSA Module: Kasparov Maestro/Analyst (1987-1990)
 This is for the newer versions. For Maestro A, see maestroa.*
 
 The hardware and chess engine is similar to the Stratos/Turbo King series.
@@ -147,7 +147,6 @@ void saitekosa_maestro_device::device_start()
 
 void saitekosa_maestro_device::device_reset()
 {
-	m_expansion->rts_w(1);
 	control_w(0);
 }
 
@@ -169,7 +168,7 @@ u8 saitekosa_maestro_device::data_r()
 
 void saitekosa_maestro_device::nmi_w(int state)
 {
-	m_maincpu->set_input_line(0, state ? CLEAR_LINE : ASSERT_LINE);
+	m_maincpu->set_input_line(0, !state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 void saitekosa_maestro_device::ack_w(int state)
@@ -216,8 +215,8 @@ u8 saitekosa_maestro_device::rts_r()
 	if (!machine().side_effects_disabled())
 	{
 		// strobe RTS-P
-		m_expansion->rts_w(0);
 		m_expansion->rts_w(1);
+		m_expansion->rts_w(0);
 	}
 
 	return 0xff;
@@ -255,7 +254,7 @@ u8 saitekosa_maestro_device::ack_r()
 {
 	// d6: _Vcc
 	// d7: ACK-P
-	return m_expansion->ack_state() ? 0 : 0x80;
+	return m_expansion->ack_state() ? 0x80 : 0x00;
 }
 
 void saitekosa_maestro_device::main_map(address_map &map)
@@ -433,5 +432,5 @@ const tiny_rom_entry *saitekosa_analyst_device::device_rom_region() const
 } // anonymous namespace
 
 
-DEFINE_DEVICE_TYPE_PRIVATE(OSA_MAESTRO, device_saitekosa_expansion_interface, saitekosa_maestro_device, "osa_maestro", "Saitek OSA: Kasparov Maestro B-D Module")
-DEFINE_DEVICE_TYPE_PRIVATE(OSA_ANALYST, device_saitekosa_expansion_interface, saitekosa_analyst_device, "osa_analyst", "Saitek OSA: Kasparov Analyst Module")
+DEFINE_DEVICE_TYPE_PRIVATE(OSA_MAESTRO, device_saitekosa_expansion_interface, saitekosa_maestro_device, "osa_maestro", "Saitek OSA Maestro B-D")
+DEFINE_DEVICE_TYPE_PRIVATE(OSA_ANALYST, device_saitekosa_expansion_interface, saitekosa_analyst_device, "osa_analyst", "Saitek OSA Analyst")

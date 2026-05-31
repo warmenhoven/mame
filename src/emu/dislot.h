@@ -9,12 +9,11 @@
 #ifndef MAME_EMU_DISLOT_H
 #define MAME_EMU_DISLOT_H
 
-#include "coretmpl.h"
-
 #include <functional>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 
 //**************************************************************************
@@ -84,7 +83,7 @@ public:
 	};
 
 	using slot_option_ptr = std::unique_ptr<slot_option>;
-	using slot_option_map = util::transparent_string_unordered_map<std::string, slot_option_ptr>;
+	using slot_option_map = std::unordered_map<std::string, slot_option_ptr>;
 
 	virtual ~device_slot_interface();
 

@@ -60,7 +60,10 @@ public:
 	bbc_exp_slot_device(machine_config const &mconfig, char const *tag, device_t *owner, uint32_t clock, T &&slot_options, const char *default_option)
 		: bbc_exp_slot_device(mconfig, tag, owner, clock)
 	{
-		set_options(std::forward<T>(slot_options), default_option, false);
+		option_reset();
+		slot_options(*this);
+		set_default_option(default_option);
+		set_fixed(false);
 	}
 
 	bbc_exp_slot_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
@@ -137,7 +140,7 @@ protected:
 };
 
 
-// device type declaration
+// device type definition
 DECLARE_DEVICE_TYPE(BBC_EXP_SLOT, bbc_exp_slot_device)
 
 void bbc_exp_devices(device_slot_interface &device);

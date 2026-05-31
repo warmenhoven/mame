@@ -113,7 +113,6 @@ private:
 
 	void note_on(voice_t &voice);
 	void reset_timer();
-	void update_pitch(voice_t &voice);
 	void update_env(voice_t &voice);
 	void update_wave(voice_t &voice);
 

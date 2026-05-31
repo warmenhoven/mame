@@ -78,8 +78,8 @@ void populate_three_column_layout(std::string_view text, T &&l, U &&c, V &&r)
 //  menu_textbox - base text box menu class
 //-------------------------------------------------
 
-menu_textbox::menu_textbox(mame_ui_manager &mui, render_target &target)
-	: menu(mui, target)
+menu_textbox::menu_textbox(mame_ui_manager &mui, render_container &container)
+	: menu(mui, container)
 	, m_layout()
 	, m_line_bounds(0.0F, 0.0F)
 	, m_visible_top(0.0F)
@@ -418,7 +418,7 @@ void menu_textbox::draw(uint32_t flags)
 
 	highlight(m_line_bounds.first, line_y0, m_line_bounds.second, line_y1, ui().colors().selected_bg_color());
 	ui().draw_text_full(
-			target(), itemtext,
+			container(), itemtext,
 			effective_left, line_y0, draw_width,
 			text_layout::text_justify::CENTER, text_layout::word_wrapping::TRUNCATE,
 			mame_ui_manager::NORMAL,
@@ -469,10 +469,10 @@ inline bool menu_textbox::pointer_in_line(float y, int line) const
 
 menu_fixed_textbox::menu_fixed_textbox(
 		mame_ui_manager &mui,
-		render_target &target,
+		render_container &container,
 		std::string &&heading,
 		std::string &&content)
-	: menu_textbox(mui, target)
+	: menu_textbox(mui, container)
 	, m_heading(std::move(heading))
 	, m_content(std::move(content))
 {

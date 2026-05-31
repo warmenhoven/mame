@@ -43,12 +43,11 @@
 
 #pragma once
 
-#include "coretmpl.h"
-
 #include <cstdlib>
-#include <span>
-#include <string>
 #include <vector>
+#include <string>
+
+#include "coretmpl.h"
 
 
 //**************************************************************************
@@ -123,7 +122,7 @@ public:
 	};
 
 	// methods
-	const std::span<const entry> &entries() const { return m_entries; }
+	const util::contiguous_sequence_wrapper<const entry> &entries() const { return m_entries; }
 
 protected:
 	option_guide(const entry *begin, size_t count)
@@ -133,7 +132,7 @@ protected:
 
 
 private:
-	std::span<const entry> m_entries;
+	util::contiguous_sequence_wrapper<const entry> m_entries;
 };
 
 // ======================> option_guide_impl

@@ -5,6 +5,8 @@
 
 #include "pcecommn.h"
 
+#include "cpu/h6280/h6280.h"
+
 #include "screen.h"
 
 // other values are unused at arcade bootlegs?
